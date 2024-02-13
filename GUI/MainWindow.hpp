@@ -1,47 +1,36 @@
 #pragma once
 
 #include <gtkmm.h>
-#include <gtkmm-plplot.h>
 
 #include <string>
+#include "PlotWindow.hpp"
 
 namespace WMG {
 
-class MainWindow : public Gtk::Window {
+class MainWindow : public Gtk::ApplicationWindow {
 public:
     MainWindow();
 
 private:
-    const std::string title = "Basic application";
-    const unsigned int width = 1024, height = 576;
 
-    class ModelColumns : public Gtk::TreeModel::ColumnRecord
-    {
-    public:
-        ModelColumns() {
-            add(m_col_id);
-            add(m_col_name);
-        }
+    void onOpenFileClicked();
+    void onOpenGraphClicked();
 
-        Gtk::TreeModelColumn<int> m_col_id;
-        Gtk::TreeModelColumn<Glib::ustring> m_col_name;
-    };
+    bool onClosePlotWindow();
 
-    ModelColumns m_Columns;
+    const std::string title = "DB plotter";
+    const unsigned int width = 800, height = 600;
 
-    Gtk::TreeView treeView;
-    Glib::RefPtr<Gtk::TreeStore> ref_treeStore;
+    Gtk::Box mainBox;
 
-    Gtk::Grid grid;
+    Gtk::Grid findOpenGrid;
+    Gtk::Button findFileButton{"_Open", true};
+    Gtk::TextView findFileTextView;
+    Gtk::Button openButton{"_Print graph", true};
 
-    sigc::connection timeout_connect;
+    Gtk::TextView DB_info;
 
-    bool on_timeout(int timer_number);
-
-    Gtk::PLplot::Canvas canvas;
-    Gtk::PLplot::Plot2D plot;
-    std::vector<double> x, y;
-    Gtk::PLplot::PlotData2D plotData;
+    std::unique_ptr<PlotWindow> plotWindow;
 
 };
 

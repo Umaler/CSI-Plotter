@@ -1,48 +1,71 @@
 #include "MainWindow.hpp"
+#include "../TestDataSource.hpp"
+#include "../TestDBDataSource.hpp"
+
+#include <iostream>
 
 namespace WMG {
 
 MainWindow::MainWindow() :
-    canvas(),
-    plot("X", "Y"),
-    x(5),
-    y(5),
-    plotData(x, y)
+    mainBox(Gtk::Orientation::VERTICAL)
 {
     set_title(title);
     set_default_size(width, height);
 
-    canvas.set_hexpand(true);
-    canvas.set_vexpand(true);
+    set_child(mainBox);
 
-    plot.hide_legend();
+    mainBox.set_margin(5);
+    mainBox.set_spacing(5);
+    mainBox.set_expand();
 
-    canvas.add_plot(plot);
+    mainBox.append(findOpenGrid);
 
-    grid.attach(canvas, 1, 0, 1, 2);
+    findOpenGrid.attach(findFileTextView, 0, 0);
+    findFileTextView.set_hexpand();
 
-    set_child(grid);
+    findOpenGrid.attach(findFileButton, 1, 0);
+    findFileButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenFileClicked) );
 
-    std::generate(x.begin(), x.end(), [](){static int i = 1; return i++;});
-    std::generate(y.begin(), y.end(), [](){static int i = 1; return i++;});
+    findOpenGrid.attach(openButton, 1, 1);
+    openButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenGraphClicked) );
 
-    plotData.
-
-    plot.add_data(plotData);
-
-    timeout_connect = Glib::signal_timeout().connect(sigc::bind(sigc::mem_fun(*this, &MainWindow::on_timeout), 5), 5);
+    DB_info.set_expand();
+    DB_info.set_editable(false);
+    mainBox.append(DB_info);
 
 }
 
-bool MainWindow::on_timeout(int timer_number) {
-    x.push_back(x.back() + 0.2);
-    y.push_back(y.back() * 0.999);
+void MainWindow::onOpenFileClicked() {
+    auto dialog = new Gtk::FileChooserDialog("Please choose a file", Gtk::FileChooser::Action::OPEN);
+    dialog->set_transient_for(*this);
+    dialog->set_modal(true);
+    dialog->signal_response().connect([&, dialog](int response_id){
+                                            if(response_id != Gtk::ResponseType::OK) {
+                                                delete dialog;
+                                                return;
+                                            }
+                                            auto filename = dialog->get_file()->get_path();
+                                            findFileTextView.get_buffer()->set_text(filename);
+                                            delete dialog;
+                                      });
+    dialog->add_button("_Cancel", Gtk::ResponseType::CANCEL);
+    dialog->add_button("_Open", Gtk::ResponseType::OK);
+    dialog->show();
+}
 
-    static bool b = false;
-    std::cout << "A" << b;
-    b = !b;
+void MainWindow::onOpenGraphClicked() {
+    if(plotWindow)
+        return;
 
-    return true;
+    plotWindow.reset(new PlotWindow(*this));
+    plotWindow->setDataSource(std::make_shared<TestDBDataSource>(findFileTextView.get_buffer()->get_text()));
+    plotWindow->signal_hide().connect( [&](){plotWindow.reset();} );
+    plotWindow->signal_unmap().connect( [&](){plotWindow.reset();} );
+    plotWindow->show();
+}
+
+bool MainWindow::onClosePlotWindow() {
+    plotWindow.reset();
 }
 
 }

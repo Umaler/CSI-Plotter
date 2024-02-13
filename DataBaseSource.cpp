@@ -1,7 +1,7 @@
 #include "DataBaseSource.hpp"
 
-DBSource::operator bool() {
-
-}
+//DBSource::operator bool() {
+//
+//}
 
 

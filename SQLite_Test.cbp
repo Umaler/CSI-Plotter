@@ -33,11 +33,13 @@
 			<Add option="`pkg-config --cflags gtkmm-4.0`" />
 			<Add option="`pkg-config --cflags gtkmm-plplot-3.0`" />
 			<Add option="`pkg-config --cflags plplot-c++`" />
+			<Add option="`pkg-config --cflags sqlitecpp`" />
 		</Compiler>
 		<Linker>
 			<Add option="`pkg-config --cflags --libs gtkmm-4.0`" />
 			<Add option="`pkg-config --cflags --libs gtkmm-plplot-3.0`" />
 			<Add option="`pkg-config --cflags --libs plplot-c++`" />
+			<Add option="`pkg-config --cflags --libs sqlitecpp`" />
 			<Add library="sqlite3" />
 		</Linker>
 		<Unit filename="DB/DB.hpp" />

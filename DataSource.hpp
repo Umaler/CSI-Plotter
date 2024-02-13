@@ -13,6 +13,6 @@ public:
     virtual operator bool() = 0;
 
     virtual DataSource& operator>>(std::pair<double, double>&) = 0;
-    virtual std::shared_ptr< std::vector<double> > getDataSet() = 0;
+    virtual std::shared_ptr< std::pair<std::vector<double>, std::vector<double>> > getDataSet() = 0;
 
 };
