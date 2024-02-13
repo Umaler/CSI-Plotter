@@ -17,6 +17,8 @@ private:
     const std::string title = "DB Plot";
     const unsigned int width = 1280, height = 920;
 
+
+
     Gtk::PLplot::Canvas canvas;
     std::unique_ptr<Gtk::PLplot::PlotData2D> plotData;
     Gtk::PLplot::Plot2D plot;

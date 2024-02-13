@@ -16,8 +16,6 @@ private:
     void onOpenFileClicked();
     void onOpenGraphClicked();
 
-    bool onClosePlotWindow();
-
     const std::string title = "DB plotter";
     const unsigned int width = 800, height = 600;
 

@@ -63,10 +63,5 @@ void MainWindow::onOpenGraphClicked() {
     plotWindow->signal_unmap().connect( [&](){plotWindow.reset();} );
     plotWindow->show();
 }
-
-bool MainWindow::onClosePlotWindow() {
-    plotWindow.reset();
-}
-
 }
 
