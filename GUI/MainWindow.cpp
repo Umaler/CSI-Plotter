@@ -1,6 +1,5 @@
 #include "MainWindow.hpp"
-#include "../TestDataSource.hpp"
-#include "../TestDBDataSource.hpp"
+#include "../DataSourcesRoot.hpp"
 
 #include <iostream>
 
@@ -39,7 +38,7 @@ void MainWindow::onOpenFileClicked() {
     auto dialog = new Gtk::FileChooserDialog("Please choose a file", Gtk::FileChooser::Action::OPEN);
     dialog->set_transient_for(*this);
     dialog->set_modal(true);
-    dialog->signal_response().connect([&, dialog](int response_id){
+    dialog->signal_response().connect([&, dialog](int response_id) {
                                             if(response_id != Gtk::ResponseType::OK) {
                                                 delete dialog;
                                                 return;
@@ -58,7 +57,8 @@ void MainWindow::onOpenGraphClicked() {
         return;
 
     plotWindow.reset(new PlotWindow(*this));
-    plotWindow->setDataSource(std::make_shared<TestDBDataSource>(findFileTextView.get_buffer()->get_text()));
+    //plotWindow->setDataSource(DataSourcesRoot::getSharedPtr());
+    plotWindow->setDataSource(std::make_shared<TestDataSource>());
     plotWindow->signal_hide().connect( [&](){plotWindow.reset();} );
     plotWindow->signal_unmap().connect( [&](){plotWindow.reset();} );
     plotWindow->show();

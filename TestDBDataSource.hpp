@@ -8,14 +8,6 @@ class TestDBDataSource : public DataSource {
 public:
     TestDBDataSource(const std::string fileName) : _fileName(fileName) {}
 
-    virtual operator bool() {
-        return true;
-    }
-
-    virtual DataSource& operator>>(std::pair<double, double>& p) {
-        return *this;
-    }
-
     virtual std::shared_ptr< std::pair<std::vector<double>, std::vector<double>> > getDataSet() {
         auto result = std::make_shared<std::pair<std::vector<double>, std::vector<double>>>();
 
@@ -42,6 +34,14 @@ public:
         }
 
         return result;
+    }
+
+    virtual std::shared_ptr< std::vector< std::shared_ptr<DataSource> > > getChildDataSources() {
+        return std::make_shared<std::vector< std::shared_ptr<DataSource> > >();
+    }
+
+    virtual Glib::ustring getName() {
+        return "Тестовый источник из БД";
     }
 
 private:

@@ -3,19 +3,16 @@
 class TestDataSource : public DataSource {
 public:
 
-    virtual operator bool() {
-        return true;
-    }
-
-    virtual DataSource& operator>>(std::pair<double, double>& p) {
-        p = {x[pos], y[pos]};
-        pos++;
-
-        return *this;
-    }
-
     virtual std::shared_ptr< std::pair<std::vector<double>, std::vector<double>> > getDataSet() {
         return std::make_shared<std::pair<std::vector<double>, std::vector<double>>>(x, y);
+    }
+
+    virtual std::shared_ptr< std::vector< std::shared_ptr<DataSource> > > getChildDataSources() {
+        return std::make_shared<std::vector< std::shared_ptr<DataSource> > >();
+    }
+
+    virtual Glib::ustring getName() {
+        return "Тестовый источник";
     }
 
 private:
