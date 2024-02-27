@@ -5,7 +5,11 @@
 PlotWindow::PlotWindow() :
     canvas(),
     plot("X", "Y"),
-    bottomPanelBox(Gtk::Orientation::HORIZONTAL)
+    bottomPanelBox(Gtk::Orientation::HORIZONTAL),
+    idChooser("id"),
+    idPacketChooser("id пакета"),
+    idMeasChooser("id измерения"),
+    numSubChooser("номер поднесущей")
 {
     /// Initialization window
     auto initDialog = new Gtk::FileChooserDialog("Choose a database file", Gtk::FileChooser::Action::OPEN); // Delete only in response lambda
@@ -104,35 +108,35 @@ PlotWindow::PlotWindow() :
         childrow = *(sourcesTreeContent->append(row.children()));
         childrow[columnName.sourceName] = "fsr";
         childrow = *(sourcesTreeContent->append(row.children()));
-        childrow[columnName.sourceName] = "ffi";
+        childrow[columnName.sourceName] = "fsi";
         childrow = *(sourcesTreeContent->append(row.children()));
         childrow[columnName.sourceName] = "ftr";
         childrow = *(sourcesTreeContent->append(row.children()));
-        childrow[columnName.sourceName] = "ffi";
+        childrow[columnName.sourceName] = "fti";
         childrow = *(sourcesTreeContent->append(row.children()));
         childrow[columnName.sourceName] = "sfr";
         childrow = *(sourcesTreeContent->append(row.children()));
-        childrow[columnName.sourceName] = "ffi";
+        childrow[columnName.sourceName] = "sfi";
         childrow = *(sourcesTreeContent->append(row.children()));
         childrow[columnName.sourceName] = "ssr";
         childrow = *(sourcesTreeContent->append(row.children()));
-        childrow[columnName.sourceName] = "ffi";
+        childrow[columnName.sourceName] = "ssi";
         childrow = *(sourcesTreeContent->append(row.children()));
         childrow[columnName.sourceName] = "str";
         childrow = *(sourcesTreeContent->append(row.children()));
-        childrow[columnName.sourceName] = "ffi";
+        childrow[columnName.sourceName] = "sti";
         childrow = *(sourcesTreeContent->append(row.children()));
         childrow[columnName.sourceName] = "tfr";
         childrow = *(sourcesTreeContent->append(row.children()));
-        childrow[columnName.sourceName] = "ffi";
+        childrow[columnName.sourceName] = "tfi";
         childrow = *(sourcesTreeContent->append(row.children()));
         childrow[columnName.sourceName] = "tsr";
         childrow = *(sourcesTreeContent->append(row.children()));
-        childrow[columnName.sourceName] = "ffi";
+        childrow[columnName.sourceName] = "tsi";
         childrow = *(sourcesTreeContent->append(row.children()));
         childrow[columnName.sourceName] = "ttr";
         childrow = *(sourcesTreeContent->append(row.children()));
-        childrow[columnName.sourceName] = "ffi";
+        childrow[columnName.sourceName] = "tti";
 
     sourcesTree.append_column(ModelColumns::sourceColumnName, columnName.sourceName);
     sourcesTree.signal_row_activated().connect( sigc::mem_fun(*this, &PlotWindow::onSourceSelected) );
@@ -147,7 +151,11 @@ PlotWindow::PlotWindow() :
     canvas.add_plot(plot);
     plot.hide_legend();
 
-
+    bottomPanelBox.append(idChooser);
+    bottomPanelBox.append(idPacketChooser);
+    bottomPanelBox.append(idMeasChooser);
+    bottomPanelBox.append(numSubChooser);
+    grid.attach(bottomPanelBox, 1, 1);
 
 }
 
@@ -177,14 +185,48 @@ void PlotWindow::onSourceSelected(const Gtk::TreeModel::Path& path, Gtk::TreeVie
 
     SQLite::Database db(dbPath.c_str());
     std::string requestBegin;
-        requestBegin += "SELECT " + field + " FROM " + table + " WHERE id_packet = 1";
+        requestBegin += "SELECT " + field + " FROM " + table + " WHERE id >= ? AND id <= ? AND id_packet >= ? AND id_packet <= ? AND id_measurement >= ? AND id_measurement <= ? AND num_sub >= ? AND num_sub <= ?";
     SQLite::Statement querry(db, requestBegin);
+    auto idBounds = idChooser.getLimits();
+    querry.bind(1, idBounds.first); querry.bind(2, idBounds.second);
+    auto idPackBounds = idPacketChooser.getLimits();
+    querry.bind(3, idPackBounds.first); querry.bind(4, idPackBounds.second);
+    auto idMeasBounds = idMeasChooser.getLimits();
+    querry.bind(5, idMeasBounds.first); querry.bind(6, idMeasBounds.second);
+    auto numSubBounds = numSubChooser.getLimits();
+    querry.bind(7, numSubBounds.first); querry.bind(8, numSubBounds.second);
+
     int i = 1;
-    while(querry.executeStep()) {
+    for(int i = 1; querry.executeStep(); i++) {
         double value = querry.getColumn(0);
-        plotData->add_datapoint(i++, value);
+        plotData->add_datapoint(i, value);
     }
 
     plot.add_data(*plotData);
 }
 
+PlotWindow::ChooserLimiter::ChooserLimiter(Glib::ustring fieldName) :
+    bottomBoundAdj(Gtk::Adjustment::create(0, 0, std::numeric_limits<DB_LIMITS_T>::max(), 1, 1)),
+    bottomBoundButton(bottomBoundAdj),
+    bottomBoundFrame("Нижняя граница"),
+
+    topBoundAdj(Gtk::Adjustment::create(0, 0, std::numeric_limits<DB_LIMITS_T>::max(), 1, 1)),
+    topBoundButton(topBoundAdj),
+    topBoundFrame("Верхняя граница"),
+
+    shouldChooseButton(Glib::ustring("Ограничить ") + fieldName + "?")
+{
+    bottomBoundFrame.set_child(bottomBoundButton);
+    attach(bottomBoundFrame, 0, 0);
+
+    topBoundFrame.set_child(topBoundButton);
+    attach(topBoundFrame, 1, 0);
+
+    attach(shouldChooseButton, 0, 1, 2);
+}
+
+std::pair<PlotWindow::DB_LIMITS_T, PlotWindow::DB_LIMITS_T> PlotWindow::ChooserLimiter::getLimits() {
+    if(!shouldChooseButton.get_active())
+        return {0, std::numeric_limits<PlotWindow::DB_LIMITS_T>::max()};
+    return {bottomBoundButton.get_value(), topBoundButton.get_value()};
+}

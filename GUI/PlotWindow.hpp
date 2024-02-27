@@ -4,6 +4,7 @@
 #include <gtkmm-plplot.h>
 
 #include <memory>
+#include <utility>
 #include <vector>
 #include <functional>
 #include "../DataSource.hpp"
@@ -17,15 +18,17 @@ public:
 
 private:
 
+    typedef int64_t DB_LIMITS_T;
+
     struct Selection{
-        int idFrom = -1;
-        int idTo = -1;
-        int id_packetFrom = -1;
-        int id_packetTo = -1;
-        int id_measurementFrom = -1;
-        int id_measurementTo = -1;
-        int num_subFrom = -1;
-        int num_subTo = -1;
+        DB_LIMITS_T idFrom = -1;
+        DB_LIMITS_T idTo = -1;
+        DB_LIMITS_T id_packetFrom = -1;
+        DB_LIMITS_T id_packetTo = -1;
+        DB_LIMITS_T id_measurementFrom = -1;
+        DB_LIMITS_T id_measurementTo = -1;
+        DB_LIMITS_T num_subFrom = -1;
+        DB_LIMITS_T num_subTo = -1;
     } selection;
 
     void setPath(Glib::ustring newPath);
@@ -58,5 +61,23 @@ private:
     Gtk::PLplot::Plot2D plot;
 
     Gtk::Box bottomPanelBox;
+    class ChooserLimiter : public Gtk::Grid {
+    public:
+        ChooserLimiter(Glib::ustring fieldName);
+
+        std::pair<DB_LIMITS_T, DB_LIMITS_T> getLimits();
+
+    private:
+        Glib::RefPtr<Gtk::Adjustment> bottomBoundAdj;
+        Gtk::SpinButton bottomBoundButton;
+        Gtk::Frame bottomBoundFrame;
+
+        Glib::RefPtr<Gtk::Adjustment> topBoundAdj;
+        Gtk::SpinButton topBoundButton;
+        Gtk::Frame topBoundFrame;
+
+        Gtk::CheckButton shouldChooseButton;
+
+    } idChooser, idPacketChooser, idMeasChooser, numSubChooser;
 
 };
