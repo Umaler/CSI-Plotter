@@ -43,8 +43,11 @@
 			<Add library="sqlite3" />
 		</Linker>
 		<Unit filename="DB/DB.hpp" />
+		<Unit filename="DBPlotter.cpp" />
+		<Unit filename="DBPlotter.hpp" />
 		<Unit filename="DataBaseSource.cpp" />
 		<Unit filename="DataBaseSource.hpp" />
+		<Unit filename="DataPlotter.hpp" />
 		<Unit filename="DataSource.hpp" />
 		<Unit filename="DataSourcesRoot.hpp" />
 		<Unit filename="GUI/MainWindow.cpp" />

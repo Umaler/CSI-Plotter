@@ -7,7 +7,7 @@
 #include "GUI/MainWindow.hpp"
 #include "DataSource.hpp"
 
-using namespace sqlite_orm;
+#include "DBPlotter.hpp"
 
 int main(int argc, char *argv[])
 {

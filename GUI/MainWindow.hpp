@@ -13,7 +13,6 @@ public:
 
 private:
 
-    void onOpenFileClicked();
     void onOpenGraphClicked();
 
     const std::string title = "DB plotter";
@@ -21,12 +20,7 @@ private:
 
     Gtk::Box mainBox;
 
-    Gtk::Grid findOpenGrid;
-    Gtk::Button findFileButton{"_Open", true};
-    Gtk::TextView findFileTextView;
     Gtk::Button openButton{"_Print graph", true};
-
-    Gtk::TextView DB_info;
 
     std::unique_ptr<PlotWindow> plotWindow;
 
