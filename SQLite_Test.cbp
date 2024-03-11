@@ -42,20 +42,11 @@
 			<Add option="`pkg-config --cflags --libs sqlitecpp`" />
 			<Add library="sqlite3" />
 		</Linker>
-		<Unit filename="DB/DB.hpp" />
 		<Unit filename="DBPlotter.cpp" />
-		<Unit filename="DBPlotter.hpp" />
-		<Unit filename="DataBaseSource.cpp" />
-		<Unit filename="DataBaseSource.hpp" />
-		<Unit filename="DataPlotter.hpp" />
-		<Unit filename="DataSource.hpp" />
-		<Unit filename="DataSourcesRoot.hpp" />
 		<Unit filename="GUI/MainWindow.cpp" />
 		<Unit filename="GUI/MainWindow.hpp" />
 		<Unit filename="GUI/PlotWindow.cpp" />
 		<Unit filename="GUI/PlotWindow.hpp" />
-		<Unit filename="TestDBDataSource.hpp" />
-		<Unit filename="TestDataSource.hpp" />
 		<Unit filename="main.cpp" />
 		<Extensions />
 	</Project>

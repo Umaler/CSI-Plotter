@@ -4,7 +4,7 @@
 
 PlotWindow::PlotWindow() :
     canvas(),
-    plot("X", "Y"),
+    plot("ID", "Value"),
     bottomPanelBox(Gtk::Orientation::HORIZONTAL),
     idChooser("id"),
     idPacketChooser("id пакета"),
@@ -12,21 +12,25 @@ PlotWindow::PlotWindow() :
     numSubChooser("номер поднесущей")
 {
     /// Initialization window
-    auto initDialog = new Gtk::FileChooserDialog("Choose a database file", Gtk::FileChooser::Action::OPEN); // Delete only in response lambda
+    Gtk::FileChooserDialog initDialog("Choose a database file", Gtk::FileChooser::Action::OPEN);
+    bool initDialogWorked = false;
 
-    initDialog->set_transient_for(*this);
-    initDialog->set_modal();
+    initDialog.set_transient_for(*this);
+    initDialog.set_modal();
 
-    initDialog->signal_response().connect([&, initDialog](int response_id) {
+    initDialog.signal_response().connect([&](int response_id) {
                                                 if(response_id == Gtk::ResponseType::OK)
-                                                    setPath(initDialog->get_file()->get_path());
-                                                delete initDialog;
+                                                    setPath(initDialog.get_file()->get_path());
+                                                initDialogWorked = true;
                                           });
 
-    initDialog->add_button("_Cancel", Gtk::ResponseType::CANCEL);
-    initDialog->add_button("_Open", Gtk::ResponseType::OK);
+    initDialog.add_button("_Cancel", Gtk::ResponseType::CANCEL);
+    initDialog.add_button("_Open", Gtk::ResponseType::OK);
 
-    initDialog->show();
+    initDialog.show();
+    while(!initDialogWorked) {  //wait until initDialog worked
+        Glib::MainContext::get_default()->iteration(true);  //iterate main loop
+    }
 
     /// Main window
     set_title(title);
@@ -185,7 +189,7 @@ void PlotWindow::onSourceSelected(const Gtk::TreeModel::Path& path, Gtk::TreeVie
 
     SQLite::Database db(dbPath.c_str());
     std::string requestBegin;
-        requestBegin += "SELECT " + field + " FROM " + table + " WHERE id >= ? AND id <= ? AND id_packet >= ? AND id_packet <= ? AND id_measurement >= ? AND id_measurement <= ? AND num_sub >= ? AND num_sub <= ?";
+        requestBegin += "SELECT id, " + field + " FROM " + table + " WHERE id >= ? AND id <= ? AND id_packet >= ? AND id_packet <= ? AND id_measurement >= ? AND id_measurement <= ? AND num_sub >= ? AND num_sub <= ?";
     SQLite::Statement querry(db, requestBegin);
     auto idBounds = idChooser.getLimits();
     querry.bind(1, idBounds.first); querry.bind(2, idBounds.second);
@@ -196,10 +200,10 @@ void PlotWindow::onSourceSelected(const Gtk::TreeModel::Path& path, Gtk::TreeVie
     auto numSubBounds = numSubChooser.getLimits();
     querry.bind(7, numSubBounds.first); querry.bind(8, numSubBounds.second);
 
-    int i = 1;
-    for(int i = 1; querry.executeStep(); i++) {
-        double value = querry.getColumn(0);
-        plotData->add_datapoint(i, value);
+    while(querry.executeStep()) {
+        int id = querry.getColumn(0);
+        double value = querry.getColumn(1);
+        plotData->add_datapoint(id, value);
     }
 
     plot.add_data(*plotData);

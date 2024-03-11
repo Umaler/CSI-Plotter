@@ -3,11 +3,7 @@
 
 #include <gtkmm.h>
 
-#include "DB/DB.hpp"
 #include "GUI/MainWindow.hpp"
-#include "DataSource.hpp"
-
-#include "DBPlotter.hpp"
 
 int main(int argc, char *argv[])
 {

@@ -1,5 +1,4 @@
 #include "MainWindow.hpp"
-#include "../DataSourcesRoot.hpp"
 
 #include <iostream>
 

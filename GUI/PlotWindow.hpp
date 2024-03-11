@@ -7,14 +7,12 @@
 #include <utility>
 #include <vector>
 #include <functional>
-#include "../DataSource.hpp"
-#include "../DataPlotter.hpp"
 
-class PlotWindow : public DataPlotter {
+class PlotWindow : public Gtk::ApplicationWindow {
 public:
     PlotWindow();
 
-    Glib::ustring getTitle() override;
+    Glib::ustring getTitle();
 
 private:
 
