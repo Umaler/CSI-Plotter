@@ -16,8 +16,11 @@ MainWindow::MainWindow() :
     mainBox.set_spacing(5);
     mainBox.set_expand();
 
-    mainBox.append(openButton);
-    openButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenGraphClicked) );
+    mainBox.append(openDBButton);
+    openDBButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenGraphClicked) );
+
+    mainBox.append(openRTButton);
+    openRTButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenRTGraphClecked) );
 }
 
 void MainWindow::onOpenGraphClicked() {
@@ -25,9 +28,18 @@ void MainWindow::onOpenGraphClicked() {
         return;
 
     plotWindow.reset(new PlotWindow);
-    plotWindow->signal_hide().connect( [&](){plotWindow.reset();} );
     plotWindow->signal_unmap().connect( [&](){plotWindow.reset();} );
     plotWindow->show();
 }
+
+void MainWindow::onOpenRTGraphClecked() {
+    if(rtWindow)
+        return;
+
+    rtWindow.reset(new RealTimeWindow);
+    rtWindow->signal_unmap().connect( [&](){rtWindow.reset();} );
+    rtWindow->show();
+}
+
 }
 

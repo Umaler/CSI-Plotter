@@ -6,7 +6,10 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <mutex>
+#include <array>
 #include <functional>
+#include <SQLiteCpp/SQLiteCpp.h>
 
 class PlotWindow : public Gtk::ApplicationWindow {
 public:
@@ -18,7 +21,7 @@ private:
 
     typedef int64_t DB_LIMITS_T;
 
-    struct Selection{
+    struct Selection {
         DB_LIMITS_T idFrom = -1;
         DB_LIMITS_T idTo = -1;
         DB_LIMITS_T id_packetFrom = -1;
@@ -77,5 +80,16 @@ private:
         Gtk::CheckButton shouldChooseButton;
 
     } idChooser, idPacketChooser, idMeasChooser, numSubChooser;
+
+    Glib::Dispatcher newDataCollected;
+    struct SharedBuffer {
+        std::mutex m;
+        inline static constexpr size_t sizeOfBuffer = 100;
+        std::array<std::pair<int, double>, sizeOfBuffer> buf;
+        size_t numOfReadedElements = 0;
+    };
+    //std::atomic<std::shared_ptr<SharedBuffer>> lastBuffer;
+    void getNewCollectedData();
+    void getDataFromDB(SQLite::Statement statement);
 
 };

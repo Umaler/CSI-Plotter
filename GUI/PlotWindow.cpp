@@ -1,6 +1,6 @@
 #include "PlotWindow.hpp"
 
-#include <SQLiteCpp/SQLiteCpp.h>
+#include <future>
 
 PlotWindow::PlotWindow() :
     canvas(),
@@ -161,6 +161,7 @@ PlotWindow::PlotWindow() :
     bottomPanelBox.append(numSubChooser);
     grid.attach(bottomPanelBox, 1, 1);
 
+    newDataCollected.connect(sigc::mem_fun(*this, &PlotWindow::getNewCollectedData));
 }
 
 Glib::ustring PlotWindow::getTitle() {
@@ -233,4 +234,46 @@ std::pair<PlotWindow::DB_LIMITS_T, PlotWindow::DB_LIMITS_T> PlotWindow::ChooserL
     if(!shouldChooseButton.get_active())
         return {0, std::numeric_limits<PlotWindow::DB_LIMITS_T>::max()};
     return {bottomBoundButton.get_value(), topBoundButton.get_value()};
+}
+
+void PlotWindow::getNewCollectedData() {
+    /*auto bufPtr = lastBuffer.load();
+    const std::lock_guard<std::mutex> lock(bufPtr->m);
+
+    for(size_t i = 0; i < bufPtr->numOfReadedElements; i++) {
+        plodData->add_datapoint(buf[i].first, buf[i].second);
+    }
+
+    lastBuffer.store(nullptr);*/
+}
+
+void PlotWindow::getDataFromDB(SQLite::Statement statement) {
+    /*std::future<void> f = std::async(std::launch::async,
+        [this]() {
+            auto buf = std::make_shared<SharedBuffer>();
+
+            while(statement.executeStep()) {
+                buf->m.lock();
+                int id = querry.getColumn(0);
+                double value = querry.getColumn(1);
+                buf->buf[buf.numOfReadedElements] = {id, value};
+                buf->numOfReadedElements++;
+
+                if(buf->numOfReadedElements >= buf->sizeOfBuffer) {
+                    lastBuffer.store(buf);
+                    buf->m.unlock();
+                    newDataCollected.emit();
+                    lastBuffer.wait();
+                    buf = std::make_shared<SharedBuffer>();
+                    buf.m.lock();
+                }
+
+                buf.m.unlock();
+            }
+
+            lastBuffer.store(buf);
+            buf->m.unlock();
+            newDataCollected.emit();
+        });
+    f.get();*/
 }
