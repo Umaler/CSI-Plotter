@@ -81,15 +81,4 @@ private:
 
     } idChooser, idPacketChooser, idMeasChooser, numSubChooser;
 
-    Glib::Dispatcher newDataCollected;
-    struct SharedBuffer {
-        std::mutex m;
-        inline static constexpr size_t sizeOfBuffer = 100;
-        std::array<std::pair<int, double>, sizeOfBuffer> buf;
-        size_t numOfReadedElements = 0;
-    };
-    //std::atomic<std::shared_ptr<SharedBuffer>> lastBuffer;
-    void getNewCollectedData();
-    void getDataFromDB(SQLite::Statement statement);
-
 };
