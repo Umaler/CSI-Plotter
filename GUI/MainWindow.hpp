@@ -18,7 +18,7 @@ private:
     void onOpenRTGraphClecked();
 
     const std::string title = "DB plotter";
-    const unsigned int width = 800, height = 600;
+    const unsigned int width = 400, height = 400;
 
     Gtk::Box mainBox;
 

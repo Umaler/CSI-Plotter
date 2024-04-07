@@ -7,9 +7,14 @@
 #include <utility>
 #include <vector>
 #include <mutex>
+#include <queue>
 #include <array>
+#include <thread>
 #include <functional>
 #include <SQLiteCpp/SQLiteCpp.h>
+
+#include "FieldChooser.hpp"
+#include "ChoosersPanel.hpp"
 
 class PlotWindow : public Gtk::ApplicationWindow {
 public:
@@ -41,44 +46,23 @@ private:
 
     Gtk::Grid grid;
 
-    void onSourceSelected(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn*);
+    void onSourceSelected(Glib::ustring table, Glib::ustring field);
 
-    class ModelColumns : public Gtk::TreeModel::ColumnRecord
-    {
-    public:
-        ModelColumns()
-        { add(sourceName); }
-
-        Gtk::TreeModelColumn<Glib::ustring> sourceName;
-        inline static const Glib::ustring sourceColumnName = "Источники данных";
-
-    } columnName;
-    Glib::RefPtr<Gtk::TreeStore> sourcesTreeContent;
-    Gtk::ScrolledWindow scrollWindow;
-    Gtk::TreeView sourcesTree;
+    FieldChooser fieldChooser;
+    ChoosersPanel choosersPanel;
 
     Gtk::PLplot::Canvas canvas;
     std::unique_ptr<Gtk::PLplot::PlotData2D> plotData;
     Gtk::PLplot::Plot2D plot;
 
-    Gtk::Box bottomPanelBox;
-    class ChooserLimiter : public Gtk::Grid {
-    public:
-        ChooserLimiter(Glib::ustring fieldName);
+    void onNewDataArrived();
 
-        std::pair<DB_LIMITS_T, DB_LIMITS_T> getLimits();
+    std::unique_ptr<std::thread, std::function<void(std::thread*)>> dataCatcherThread;
+    std::atomic<bool> toStopCatcher;
+    void dataCatcher(Glib::ustring table, Glib::ustring field);
 
-    private:
-        Glib::RefPtr<Gtk::Adjustment> bottomBoundAdj;
-        Gtk::SpinButton bottomBoundButton;
-        Gtk::Frame bottomBoundFrame;
-
-        Glib::RefPtr<Gtk::Adjustment> topBoundAdj;
-        Gtk::SpinButton topBoundButton;
-        Gtk::Frame topBoundFrame;
-
-        Gtk::CheckButton shouldChooseButton;
-
-    } idChooser, idPacketChooser, idMeasChooser, numSubChooser;
+    Glib::Dispatcher newDataCollected;
+    std::mutex commonBufferM;
+    std::queue<std::pair<size_t, double>> commonBuffer;
 
 };
