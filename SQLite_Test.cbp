@@ -45,13 +45,23 @@
 			<Add library="sfml-network" />
 			<Add library="sfml-window" />
 			<Add library="sfml-system" />
+			<Add library="epoxy" />
 		</Linker>
+		<Unit filename="DataSet.cpp" />
+		<Unit filename="DataSet.hpp" />
+		<Unit filename="DataSources/DBSource.cpp" />
+		<Unit filename="DataSources/DBSource.hpp" />
+		<Unit filename="DataSources/DataSource.hpp" />
 		<Unit filename="GUI/ChooserPanel.cpp" />
 		<Unit filename="GUI/ChoosersPanel.hpp" />
+		<Unit filename="GUI/ExtendablePlot.cpp" />
+		<Unit filename="GUI/ExtendablePlot.hpp" />
 		<Unit filename="GUI/FieldChooser.cpp" />
 		<Unit filename="GUI/FieldChooser.hpp" />
 		<Unit filename="GUI/MainWindow.cpp" />
 		<Unit filename="GUI/MainWindow.hpp" />
+		<Unit filename="GUI/OpenGL/Shader.cpp" />
+		<Unit filename="GUI/OpenGL/Shader.hpp" />
 		<Unit filename="GUI/PlotWindow.cpp" />
 		<Unit filename="GUI/PlotWindow.hpp" />
 		<Unit filename="GUI/RealTimeWindow.cpp" />
@@ -61,6 +71,7 @@
 		</Unit>
 		<Unit filename="csi_fun.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="utils/Boundaries.hpp" />
 		<Unit filename="utils/DBDescriptor.cpp" />
 		<Unit filename="utils/DBDescriptor.hpp" />
 		<Unit filename="utils/utils.cpp" />
