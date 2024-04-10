@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../DataSources/DBSource.hpp"
+#include "../DataSources/RTSource.hpp"
 
 namespace WMG {
 
@@ -47,6 +48,12 @@ MainWindow::MainWindow() :
 
     mainBox.append(openTestButton);
     openTestButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenTestWindow) );
+
+    mainBox.append(openDSPButton);
+    openDSPButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenDSPWindow) );
+
+    mainBox.append(openRTDSButton);
+    openRTDSButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenRTDSWindow) );
 }
 
 void MainWindow::onOpenGraphClicked() {
@@ -74,6 +81,26 @@ void MainWindow::onOpenTestWindow() {
     tWindow.reset(new TestWindow);
     tWindow->signal_unmap().connect( [&](){tWindow.reset();} );
     tWindow->show();
+}
+
+void MainWindow::onOpenDSPWindow() {
+    if(dspWindow)
+        return;
+
+    SQLite::Database db("/home/de/DB/Exp12.01.24.sqlite");
+
+    dspWindow.reset(new DataSourcePlotWindow(std::make_unique<DBSource>(std::move(db))));
+    dspWindow->signal_unmap().connect( [&](){dspWindow.reset();} );
+    dspWindow->show();
+}
+
+void MainWindow::onOpenRTDSWindow() {
+    if(rtdsWindow)
+        return;
+
+    rtdsWindow.reset(new DataSourcePlotWindow(std::make_unique<RTSource>()));
+    rtdsWindow->signal_unmap().connect( [&](){rtdsWindow.reset();} );
+    rtdsWindow->show();
 }
 
 }

@@ -10,17 +10,9 @@ void DataSet::addDataPoint(double x, double y) {
     signalChanged.emit(*this);
 }
 
-template <typename Iterator>    //iterators must point to pair<x, y>
-void DataSet::addData(Iterator begin, Iterator end) {
-    bool toSort = false;
-    for(Iterator it = begin; it != end; ++it) {
-        toSort = toSort || it->first < extr.maxX;
-        addPoint(it->first, it->second);
-    }
-    if(toSort) {
-        sort();
-    }
-
+void DataSet::clear() {
+    extr = Extrems();
+    points.clear();
     signalChanged.emit(*this);
 }
 

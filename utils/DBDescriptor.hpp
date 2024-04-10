@@ -65,7 +65,7 @@ inline const DBDescriptor dbDescriptor
             "ttph"
         }
     },
-    {
+    /*{
         "measurement",
         {
             "ffr",
@@ -87,7 +87,7 @@ inline const DBDescriptor dbDescriptor
             "ttr",
             "tti"
         }
-    },
+    },*/
     {
         "phase",
         {

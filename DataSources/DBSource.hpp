@@ -17,6 +17,7 @@ public:
     virtual void setBoundaries(Boundaries bounds);
     virtual void addCollectionType(std::string table, std::string field);
     virtual void removeCollectionType(std::string table, std::string field);
+    virtual void removeAllCollectionTypes();
     virtual void stopCollection();
 
     virtual SignalType signalOnNewDataArrived() const;
@@ -26,10 +27,21 @@ public:
 private:
     SQLite::Database db;
 
-    std::atomic<bool> stopWorker;
-    std::unique_ptr<std::thread, std::function<void(std::thread*)>> workerThread;
-    Glib::Dispatcher threadStoped;
-    void worker();
+    class Worker {
+    public:
+        Worker(DBSource& parent);
+
+        void start();
+        void stop();
+
+    private:
+        DBSource& dbSource;
+
+        std::unique_ptr<std::thread, std::function<void(std::thread*)>> workerThread;
+        std::atomic<bool> stopWorker;
+        void work();
+
+    } worker;
 
     Glib::Dispatcher workerGotData;
     std::mutex commonBufferM;

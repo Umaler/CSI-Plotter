@@ -17,6 +17,7 @@ public:
     virtual void setBoundaries(Boundaries bounds) = 0;
     virtual void addCollectionType(std::string table, std::string field) = 0;
     virtual void removeCollectionType(std::string table, std::string field) = 0;
+    virtual void removeAllCollectionTypes() = 0;
     virtual void stopCollection() = 0;
 
     virtual SignalType signalOnNewDataArrived() const = 0;

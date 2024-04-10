@@ -17,8 +17,24 @@ public:
 
     void addDataPoint(double x, double y);
 
+    //have to add implementation into hpp
+    //because otherwise linker doesn't
+    //see specializations
     template <typename Iterator>    //iterators must point to pair<x, y>
-    void addData(Iterator begin, Iterator end);
+    void addData(Iterator begin, Iterator end) {
+        bool toSort = false;
+        for(Iterator it = begin; it != end; ++it) {
+            toSort = toSort || it->first < extr.maxX;
+            addPoint(it->first, it->second);
+        }
+        if(toSort) {
+            sort();
+        }
+
+        signalChanged.emit(*this);
+    }
+
+    void clear();
 
     sigc::signal<void(DataSet&)> signalOnChanged() const;
 

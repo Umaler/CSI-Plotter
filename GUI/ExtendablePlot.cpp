@@ -12,10 +12,10 @@ void ExtendablePlot::addDataSet(const DataSet& ds) {
 void ExtendablePlot::onUpdates(const DataSet& updatedDS) {
     auto extr = updatedDS.getExtremums();
 
-    if(extr.maxX > maxX) maxX = extr.maxX;
-    if(extr.minX < minX) minX = extr.minX;
-    if(extr.maxY > maxY) maxY = extr.maxY;
-    if(extr.minY < minY) minY = extr.minY;
+    maxX = extr.maxX;
+    minX = extr.minX;
+    maxY = extr.maxY;
+    minY = extr.minY;
 
     queue_draw();
 }
@@ -228,11 +228,6 @@ void ExtendablePlot::drawLegend(size_t windowWidth, size_t windowHeight, EdgePos
     cr->move_to(maxXPosX, maxXPosY);
     cr->show_text(maxXStr);
 
-    double dX = windowWidth * pos.left;
-    double dY = windowHeight * pos.down;
-    cr->user_to_device(dX, dY);
-    std::cout << dX << "\t" << dY << std::endl;
-
     glUseProgram(textureShader);
     glBindVertexArray(0);
     OpenglCairoBuffer buffer(*surface);
@@ -241,8 +236,6 @@ void ExtendablePlot::drawLegend(size_t windowWidth, size_t windowHeight, EdgePos
 }
 
 bool ExtendablePlot::on_render(const Glib::RefPtr< Gdk::GLContext >& context) {
-    if(ds->getNumberOfPoints() < 4)
-        return false;
     Gdk::RGBA foreground(0.0, 0.0, 0.0, 1.0), background(1.0, 1.0, 1.0, 1.0);
 
     glBlendFunc(GL_SRC_COLOR,  GL_ONE_MINUS_SRC_ALPHA);
@@ -261,9 +254,23 @@ bool ExtendablePlot::on_render(const Glib::RefPtr< Gdk::GLContext >& context) {
                             -1.0 + down_reserve / height / 2.0,
                             -1.0 + left_reserve / width / 2.0};
 
-    drawDataSet(*ds, {1.0, 0.0, 0.0, 1.0}, graphBox);
+    auto lastMaxX = maxX;
+    auto lastMinX = minX;
+    auto lastMaxY = maxY;
+    auto lastMinY = minY;
+    if(ds->getNumberOfPoints() >= 3)
+        drawDataSet(*ds, {1.0, 0.0, 0.0, 1.0}, graphBox);
+    maxX = ds->getNumberOfPoints();
+    minX = 0;
+    if(maxY < 0) maxY = 0;
+    if(minY > 0) minY = 0;
     drawLegend(context->get_surface()->get_width(), context->get_surface()->get_height(), graphBox);
     glFlush();
+
+    maxX = lastMaxX;
+    minX = lastMinX;
+    maxY = lastMaxY;
+    minY = lastMinY;
 
     int err = glGetError();
     if(err != GL_NO_ERROR) {

@@ -5,28 +5,16 @@
 DBSource::DBSource(SQLite::Database&& database) :
     db(std::move(database)),
 
-    stopWorker(false),
-    workerThread(nullptr,
-                 [&](std::thread* thr) {
-                    stopWorker = true;
-                    if(!thr)
-                        return;
-                    thr->join();
-                    delete thr;
-                 }
-                 ),
-
     collectionTypesUpdated(false),
 
-    boundsUpdated(false)
+    boundsUpdated(false),
+
+    worker(*this)
 {
     workerGotData.connect([&](){
+        std::lock_guard lg(commonBufferM);
         signalDataArrived.emit(std::move(commonBuffer));
         commonBuffer.clear();
-    });
-
-    threadStoped.connect([&](){
-        workerThread.reset();
     });
 }
 
@@ -46,12 +34,11 @@ void DBSource::setBoundaries(Boundaries bounds) {
 
 void DBSource::addCollectionType(std::string table, std::string field) {
     std::lock_guard lg(collectionTypesM);
+    collectionTypes.clear();
     collectionTypes.push_back({table, field});
     collectionTypesUpdated = true;
 
-    workerThread.reset();
-    stopWorker = false;
-    workerThread.reset(new std::thread(&DBSource::worker, this));
+    worker.start();
 }
 
 void DBSource::removeCollectionType(std::string table, std::string field) {
@@ -61,15 +48,44 @@ void DBSource::removeCollectionType(std::string table, std::string field) {
     collectionTypesUpdated = true;
 }
 
+void DBSource::removeAllCollectionTypes() {
+    worker.stop();
+    collectionTypes.clear();
+}
+
 void DBSource::stopCollection() {
-    workerThread.reset();
+    worker.stop();
 }
 
 DataSource::SignalType DBSource::signalOnNewDataArrived() const {
     return signalDataArrived;
 }
 
-void DBSource::worker() {
+DBSource::Worker::Worker(DBSource& parent) :
+    dbSource(parent),
+    workerThread(nullptr,
+                 [&](std::thread* thr) {
+                     if(!thr)
+                         return;
+                     stopWorker = true;
+                     thr->join();
+                     stopWorker = false;
+                 }
+                 ),
+    stopWorker(false)
+{
+}
+
+void DBSource::Worker::start() {
+    workerThread.reset(new std::thread(&DBSource::Worker::work, this));
+}
+
+void DBSource::Worker::stop() {
+    workerThread.reset();
+    dbSource.commonBuffer.clear();
+}
+
+void DBSource::Worker::work() {
     const size_t bufSize = 100;
 
     auto getQuery = [&](std::string table, std::string field) {
@@ -77,27 +93,27 @@ void DBSource::worker() {
             std::string request;
             request += "SELECT id, " + field + " FROM " + table + " WHERE id >= ? AND id <= ? AND id_packet >= ? AND id_packet <= ? AND id_measurement >= ? AND id_measurement <= ? AND num_sub >= ? AND num_sub <= ?";
 
-            SQLite::Statement query(db, request);
-            query.bind(1, bounds.id.min);     query.bind(2, bounds.id.max);
-            query.bind(3, bounds.packId.min); query.bind(4, bounds.packId.max);
-            query.bind(5, bounds.measId.min); query.bind(6, bounds.measId.max);
-            query.bind(7, bounds.numSub.min); query.bind(8, bounds.numSub.max);
+            SQLite::Statement query(dbSource.db, request);
+            query.bind(1, dbSource.bounds.id.min);     query.bind(2, dbSource.bounds.id.max);
+            query.bind(3, dbSource.bounds.packId.min); query.bind(4, dbSource.bounds.packId.max);
+            query.bind(5, dbSource.bounds.measId.min); query.bind(6, dbSource.bounds.measId.max);
+            query.bind(7, dbSource.bounds.numSub.min); query.bind(8, dbSource.bounds.numSub.max);
 
             return query;
         }
         catch(std::exception& ex) {
             std::cerr << ex.what() << std::endl;
         }
-        return SQLite::Statement(db, "");
+        return SQLite::Statement(dbSource.db, "");
     };
 
-    collectionTypesM.lock();
+    dbSource.collectionTypesM.lock();
     std::vector<SQLite::Statement> queries;
-    queries.reserve(collectionTypes.size());
-    for(const auto& i : collectionTypes) {
+    queries.reserve(dbSource.collectionTypes.size());
+    for(const auto& i : dbSource.collectionTypes) {
         queries.push_back(getQuery(i.first, i.second));
     }
-    collectionTypesM.unlock();
+    dbSource.collectionTypesM.unlock();
     std::vector<bool> correctQueries(queries.size(), true);
     size_t validQueries = queries.size();
 
@@ -132,19 +148,17 @@ void DBSource::worker() {
 
         bool commonBufferFree = false;
         while(!commonBufferFree && !stopWorker) {
-            commonBufferM.lock();
-            commonBufferFree = commonBuffer.empty();
+            dbSource.commonBufferM.lock();
+            commonBufferFree = dbSource.commonBuffer.empty();
             if(commonBufferFree) {
-                commonBuffer = localBuffer;
+                dbSource.commonBuffer = localBuffer;
                 localBuffer.clear();
-                workerGotData.emit();
+                dbSource.workerGotData.emit();
             }
-            commonBufferM.unlock();
+            dbSource.commonBufferM.unlock();
         }
 
         if(validQueries == 0)
             break;
     }
-
-    threadStoped.emit();
 }

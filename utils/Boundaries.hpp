@@ -3,8 +3,8 @@
 #include <limits>
 
 struct Boundary {
-    double min = 0;
-    double max = std::numeric_limits<double>::max();
+    int64_t min = 0;
+    int64_t max = std::numeric_limits<int64_t>::max();
 };
 
 struct Boundaries {

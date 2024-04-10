@@ -52,8 +52,12 @@
 		<Unit filename="DataSources/DBSource.cpp" />
 		<Unit filename="DataSources/DBSource.hpp" />
 		<Unit filename="DataSources/DataSource.hpp" />
+		<Unit filename="DataSources/RTSource.cpp" />
+		<Unit filename="DataSources/RTSource.hpp" />
 		<Unit filename="GUI/ChooserPanel.cpp" />
 		<Unit filename="GUI/ChoosersPanel.hpp" />
+		<Unit filename="GUI/DataSourcePlotWindow.cpp" />
+		<Unit filename="GUI/DataSourcePlotWindow.hpp" />
 		<Unit filename="GUI/ExtendablePlot.cpp" />
 		<Unit filename="GUI/ExtendablePlot.hpp" />
 		<Unit filename="GUI/FieldChooser.cpp" />
