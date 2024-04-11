@@ -32,14 +32,10 @@
 			<Add option="-std=c++20" />
 			<Add option="-latomic" />
 			<Add option="`pkg-config --cflags gtkmm-4.0`" />
-			<Add option="`pkg-config --cflags gtkmm-plplot-3.0`" />
-			<Add option="`pkg-config --cflags plplot-c++`" />
 			<Add option="`pkg-config --cflags sqlitecpp`" />
 		</Compiler>
 		<Linker>
 			<Add option="`pkg-config --cflags --libs gtkmm-4.0`" />
-			<Add option="`pkg-config --cflags --libs gtkmm-plplot-3.0`" />
-			<Add option="`pkg-config --cflags --libs plplot-c++`" />
 			<Add option="`pkg-config --cflags --libs sqlitecpp`" />
 			<Add library="sqlite3" />
 			<Add library="sfml-network" />
@@ -70,8 +66,6 @@
 		<Unit filename="GUI/MainWindow.hpp" />
 		<Unit filename="GUI/OpenGL/Shader.cpp" />
 		<Unit filename="GUI/OpenGL/Shader.hpp" />
-		<Unit filename="GUI/RealTimeWindow.cpp" />
-		<Unit filename="GUI/RealTimeWindow.hpp" />
 		<Unit filename="csi_fun.c">
 			<Option compilerVar="CC" />
 		</Unit>

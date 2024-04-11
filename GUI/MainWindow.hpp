@@ -4,8 +4,6 @@
 
 #include <string>
 #include "DataSourcePlotWindow.hpp"
-#include "RealTimeWindow.hpp"
-#include "../DataSources/DBSource.hpp"
 
 namespace WMG {
 
