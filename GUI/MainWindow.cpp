@@ -8,27 +8,6 @@
 
 namespace WMG {
 
-TestWindow::TestWindow() :
-    db("/home/de/DB/Exp12.01.24.sqlite"),
-    dbsource(std::move(db))
-{
-    set_default_size(100, 100);
-
-    dbsource.signalOnNewDataArrived().connect([](std::vector<std::vector<std::pair<double, double>>> data) {
-        for(const auto& i : data) {
-            for(const auto& j : i) {
-                std::cout << j.first << " " << j.second << std::endl;
-            }
-            std::cout << "------------------" << std::endl;
-        }
-        std::cout << "End of pack" << std::endl;
-    });
-    Boundaries bounds;
-    bounds.id.max = 500; bounds.id.min = 0;
-    dbsource.setBoundaries(bounds);
-    dbsource.addCollectionType("amplitude", "ffa");
-}
-
 MainWindow::MainWindow() :
     mainBox(Gtk::Orientation::VERTICAL)
 {
@@ -41,15 +20,6 @@ MainWindow::MainWindow() :
     mainBox.set_spacing(5);
     mainBox.set_expand();
 
-    mainBox.append(openDBButton);
-    openDBButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenGraphClicked) );
-
-    mainBox.append(openRTButton);
-    openRTButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenRTGraphClecked) );
-
-    mainBox.append(openTestButton);
-    openTestButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenTestWindow) );
-
     mainBox.append(openDSPButton);
     openDSPButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenDSPWindow) );
 
@@ -58,33 +28,6 @@ MainWindow::MainWindow() :
 
     mainBox.append(openDiffPhaseDB);
     openDiffPhaseDB.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenDBPDWindow) );
-}
-
-void MainWindow::onOpenGraphClicked() {
-    if(plotWindow)
-        return;
-
-    plotWindow.reset(new PlotWindow);
-    plotWindow->signal_unmap().connect( [&](){plotWindow.reset();} );
-    plotWindow->show();
-}
-
-void MainWindow::onOpenRTGraphClecked() {
-    if(rtWindow)
-        return;
-
-    rtWindow.reset(new RealTimeWindow);
-    rtWindow->signal_unmap().connect( [&](){rtWindow.reset();} );
-    rtWindow->show();
-}
-
-void MainWindow::onOpenTestWindow() {
-    if(tWindow)
-        return;
-
-    tWindow.reset(new TestWindow);
-    tWindow->signal_unmap().connect( [&](){tWindow.reset();} );
-    tWindow->show();
 }
 
 void MainWindow::onOpenDSPWindow() {

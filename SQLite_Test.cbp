@@ -49,9 +49,13 @@
 		</Linker>
 		<Unit filename="DataSet.cpp" />
 		<Unit filename="DataSet.hpp" />
+		<Unit filename="DataSources/DBPhaseDiffSource.cpp" />
+		<Unit filename="DataSources/DBPhaseDiffSource.hpp" />
 		<Unit filename="DataSources/DBSource.cpp" />
 		<Unit filename="DataSources/DBSource.hpp" />
 		<Unit filename="DataSources/DataSource.hpp" />
+		<Unit filename="DataSources/RTPhaseDiffSource.cpp" />
+		<Unit filename="DataSources/RTPhaseDiffSource.hpp" />
 		<Unit filename="DataSources/RTSource.cpp" />
 		<Unit filename="DataSources/RTSource.hpp" />
 		<Unit filename="GUI/ChooserPanel.cpp" />
@@ -66,8 +70,6 @@
 		<Unit filename="GUI/MainWindow.hpp" />
 		<Unit filename="GUI/OpenGL/Shader.cpp" />
 		<Unit filename="GUI/OpenGL/Shader.hpp" />
-		<Unit filename="GUI/PlotWindow.cpp" />
-		<Unit filename="GUI/PlotWindow.hpp" />
 		<Unit filename="GUI/RealTimeWindow.cpp" />
 		<Unit filename="GUI/RealTimeWindow.hpp" />
 		<Unit filename="csi_fun.c">
@@ -78,8 +80,6 @@
 		<Unit filename="utils/Boundaries.hpp" />
 		<Unit filename="utils/DBDescriptor.cpp" />
 		<Unit filename="utils/DBDescriptor.hpp" />
-		<Unit filename="utils/utils.cpp" />
-		<Unit filename="utils/utils.hpp" />
 		<Extensions />
 	</Project>
 </CodeBlocks_project_file>
