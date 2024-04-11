@@ -32,6 +32,7 @@ private:
     void onOpenTestWindow();
     void onOpenDSPWindow();
     void onOpenRTDSWindow();
+    void onOpenDBPDWindow();
 
     const std::string title = "DB plotter";
     const unsigned int width = 400, height = 400;
@@ -43,12 +44,14 @@ private:
     Gtk::Button openTestButton{"_Test window", true};
     Gtk::Button openDSPButton{"_Open Data Source Plot Window", true};
     Gtk::Button openRTDSButton{"_Open Real Time DS Window", true};
+    Gtk::Button openDiffPhaseDB{"_Open from DB with phase diff", true};
 
     std::unique_ptr<PlotWindow> plotWindow;
     std::unique_ptr<RealTimeWindow> rtWindow;
     std::unique_ptr<TestWindow> tWindow;
     std::unique_ptr<DataSourcePlotWindow> dspWindow;
     std::unique_ptr<DataSourcePlotWindow> rtdsWindow;
+    std::unique_ptr<DataSourcePlotWindow> dbpdWindow;
 
 };
 

@@ -29,7 +29,7 @@ class ChooserLimiter : public Gtk::Grid {
 
     };
 
-class ChoosersPanel : public Gtk::Box {
+class ChoosersPanel : public Gtk::Grid {
 public:
 
     ChoosersPanel();

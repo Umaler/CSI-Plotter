@@ -1,16 +1,18 @@
 #include "ChoosersPanel.hpp"
 
 ChoosersPanel::ChoosersPanel() :
-    Box(Gtk::Orientation::HORIZONTAL),
     idChooser("id"),
     idPacketChooser("id пакета"),
     idMeasChooser("id измерения"),
     numSubChooser("номер поднесущей")
 {
-    append(idChooser);
-    append(idPacketChooser);
-    append(idMeasChooser);
-    append(numSubChooser);
+    set_column_spacing(5);
+    set_row_spacing(5);
+
+    attach(idChooser,       0, 0);
+    attach(idPacketChooser, 1, 0);
+    attach(idMeasChooser,   0, 1);
+    attach(numSubChooser,   1, 1);
 
     auto onChooserUpdate = [&]() {
         updateSignal.emit(getBounds());
