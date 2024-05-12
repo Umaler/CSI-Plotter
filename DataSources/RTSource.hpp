@@ -2,6 +2,7 @@
 
 #include "DataSource.hpp"
 #include <atomic>
+#include <array>
 #include <mutex>
 #include <thread>
 #include <glibmm/dispatcher.h>

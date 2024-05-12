@@ -65,29 +65,6 @@ inline const DBDescriptor dbDescriptor
             "ttph"
         }
     },
-    /*{
-        "measurement",
-        {
-            "ffr",
-            "ffi",
-            "fsr",
-            "fsi",
-            "ftr",
-            "fti",
-            "sfr",
-            "sfi",
-            "ssr",
-            "ssi",
-            "str",
-            "sti",
-            "tfr",
-            "tfi",
-            "tsr",
-            "tsi",
-            "ttr",
-            "tti"
-        }
-    },*/
     {
         "phase",
         {

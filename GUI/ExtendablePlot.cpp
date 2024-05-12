@@ -2,6 +2,7 @@
 
 ExtendablePlot::ExtendablePlot() {
     set_size_request(left_reserve + right_reserve, up_reserve + down_reserve);
+    set_use_es(false);
 }
 
 void ExtendablePlot::addDataSet(const DataSet& ds) {
@@ -21,7 +22,7 @@ void ExtendablePlot::onUpdates(const DataSet& updatedDS) {
 }
 
 void ExtendablePlot::initShaders() {
-    constexpr const char* const vertShaderProgram =     "#version 420\n"
+    constexpr const char* const vertShaderProgram =     "#version 460\n"
                                                         "layout(location = 0) in vec2 aPos;\n"
                                                         "uniform double xMult;\n"
                                                         "uniform double xShift;\n"
@@ -32,7 +33,7 @@ void ExtendablePlot::initShaders() {
                                                         "   gl_Position = vec4(aPos.x * xMult + xShift, aPos.y * yMult + yShift, 0.0, 1.0);\n"
                                                         "}";
 
-    constexpr const char* const fragShaderProgram =     "#version 420\n"
+    constexpr const char* const fragShaderProgram =     "#version 460\n"
                                                         "out vec4 FragColor;\n"
                                                         "uniform vec4 color;\n"
                                                         "void main() {\n"
@@ -40,7 +41,7 @@ void ExtendablePlot::initShaders() {
                                                         "}";
     shader = Shader(vertShaderProgram, fragShaderProgram);
 
-    constexpr const char textVertProg[] =  "#version 420\n"
+    constexpr const char textVertProg[] =  "#version 460\n"
                                            "layout (location = 0) in vec2 aPos;\n"
                                            "layout (location = 1) in vec2 aTexCoord;\n"
                                            "\n"
@@ -51,7 +52,7 @@ void ExtendablePlot::initShaders() {
                                                "gl_Position = vec4(aPos, 0.0, 1.0);\n"
                                                "TexCoord = aTexCoord;\n"
                                            "}";
-    constexpr const char textFragProg[] =  "#version 420\n"
+    constexpr const char textFragProg[] =  "#version 460\n"
                                            "out vec4 FragColor;\n"
                                            "\n"
                                            "in vec2 TexCoord;\n"

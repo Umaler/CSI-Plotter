@@ -4,6 +4,7 @@
 #include <atomic>
 #include <thread>
 #include <memory>
+#include <mutex>
 #include <functional>
 #include <glibmm/dispatcher.h>
 #include <SQLiteCpp/Database.h>

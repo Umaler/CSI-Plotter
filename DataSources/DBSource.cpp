@@ -11,6 +11,10 @@ DBSource::DBSource(SQLite::Database&& database) :
 
     worker(*this)
 {
+    if(!dbDescriptor.checkCompliance(db)) {
+        throw std::runtime_error("Non-compliant database");
+    }
+
     workerGotData.connect([&](){
         std::lock_guard lg(commonBufferM);
         signalDataArrived.emit(std::move(commonBuffer));

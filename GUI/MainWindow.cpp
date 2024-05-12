@@ -34,12 +34,34 @@ void MainWindow::onOpenDSPWindow() {
     if(dspWindow)
         return;
 
-    SQLite::Database db("/home/user/Exp12.01.24.sqlite");
+    Gtk::FileChooserDialog* dialog = new Gtk::FileChooserDialog(*this, "Choose database", Gtk::FileChooser::Action::OPEN);
+    dialog->set_modal();
+    dialog->add_button("_Cancel", Gtk::ResponseType::CANCEL);
+    dialog->add_button("_Open",   Gtk::ResponseType::OK);
 
-    dspWindow.reset(new DataSourcePlotWindow(std::make_unique<DBSource>(std::move(db))));
-    dspWindow->signal_unmap().connect( [&](){dspWindow.reset();} );
-    dspWindow->set_title("Data base plot");
-    dspWindow->show();
+    dialog->signal_response().connect(
+        [dialog, this](int response_id) {
+            if(response_id != Gtk::ResponseType::OK) {
+                delete dialog;
+                return;
+            }
+
+            try {
+                SQLite::Database db(dialog->get_file()->get_path());
+
+                dspWindow.reset(new DataSourcePlotWindow(std::make_unique<DBSource>(std::move(db))));
+                dspWindow->signal_unmap().connect( [&](){dspWindow.reset();} );
+                dspWindow->set_title("Data base plot");
+                dspWindow->show();
+            }
+            catch(std::exception& ex) {
+                std::cerr << ex.what();
+            }
+            delete dialog;
+        }
+    );
+
+    dialog->show();
 }
 
 void MainWindow::onOpenRTDSWindow() {
