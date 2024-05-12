@@ -11,5 +11,5 @@ struct Boundaries {
     Boundary id;
     Boundary packId;
     Boundary measId;
-    Boundary numSub;
+    Boundary numSub {0, 0};
 };

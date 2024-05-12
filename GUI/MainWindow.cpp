@@ -36,8 +36,6 @@ void MainWindow::onOpenDSPWindow() {
 
     Glib::RefPtr<Gtk::FileChooserNative> dialog = Gtk::FileChooserNative::create("Choose database", *this, Gtk::FileChooser::Action::OPEN);
     dialog->set_modal();
-    //dialog->add_button("_Cancel", Gtk::ResponseType::CANCEL);
-    //dialog->add_button("_Open",   Gtk::ResponseType::OK);
 
     dialog->signal_response().connect(
         [dialog, this](int response_id) {

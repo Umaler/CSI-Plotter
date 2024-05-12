@@ -46,6 +46,9 @@ public:
 private:
     sigc::signal<void(Boundaries)> updateSignal;
 
-    ChooserLimiter idChooser, idPacketChooser, idMeasChooser, numSubChooser;
+    ChooserLimiter idChooser, idPacketChooser, idMeasChooser;
+    Glib::RefPtr<Gtk::Adjustment> numsubAdj;
+    Gtk::SpinButton numsubButton;
+    Gtk::Frame numsubFrame;
 
 };

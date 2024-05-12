@@ -15,11 +15,6 @@ DataSourcePlotWindow::DataSourcePlotWindow(std::unique_ptr<DataSource> ds) :
 
     plotDataSet->setColor(Gdk::RGBA("black"));
     ep.addDataSet(plotDataSet);
-    std::shared_ptr<DataSet> testS(new DataSet);
-    testS->addDataPoint(0, 10);
-    testS->addDataPoint(500, 142);
-    testS->setColor(Gdk::RGBA("red"));
-    ep.addDataSet(testS);
 
     fieldChooser.set_vexpand();
     fieldChooser.signalOnChoosed().connect([&](std::string table, std::string field) {

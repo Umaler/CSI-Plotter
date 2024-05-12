@@ -4,15 +4,20 @@ ChoosersPanel::ChoosersPanel() :
     idChooser("id"),
     idPacketChooser("id пакета"),
     idMeasChooser("id измерения"),
-    numSubChooser("номер поднесущей")
+
+    numsubAdj(Gtk::Adjustment::create(0, 0, std::numeric_limits<int64_t>::max(), 1, 1)),
+    numsubButton(numsubAdj),
+    numsubFrame("Поднесущая")
 {
     set_column_spacing(5);
     set_row_spacing(5);
 
+    numsubFrame.set_child(numsubButton);
+
     attach(idChooser,       0, 0);
     attach(idPacketChooser, 1, 0);
     attach(idMeasChooser,   0, 1);
-    attach(numSubChooser,   1, 1);
+    attach(numsubFrame,     1, 1);
 
     auto onChooserUpdate = [&]() {
         updateSignal.emit(getBounds());
@@ -20,7 +25,7 @@ ChoosersPanel::ChoosersPanel() :
     idChooser.signalOnUpdate().connect(onChooserUpdate);
     idPacketChooser.signalOnUpdate().connect(onChooserUpdate);
     idMeasChooser.signalOnUpdate().connect(onChooserUpdate);
-    numSubChooser.signalOnUpdate().connect(onChooserUpdate);
+    numsubButton.signal_value_changed().connect(onChooserUpdate);
 }
 
 Boundaries ChoosersPanel::getBounds() const {
@@ -54,7 +59,8 @@ std::pair<int64_t, int64_t> ChoosersPanel::getIdMeasLimits() const {
 }
 
 std::pair<int64_t, int64_t> ChoosersPanel::getNumSubLimits() const {
-    return numSubChooser.getLimits();
+    size_t val = numsubButton.get_value_as_int();
+    return {val, val};
 }
 
 sigc::signal<void(Boundaries)> ChoosersPanel::signalNewBounds() const {
@@ -73,12 +79,12 @@ ChooserLimiter::ChooserLimiter(Glib::ustring fieldName) :
     shouldChooseButton(Glib::ustring("Ограничить ") + fieldName + "?")
 {
     bottomBoundFrame.set_child(bottomBoundButton);
-    bottomBoundButton.signal_changed().connect(sigc::mem_fun(*this, &ChooserLimiter::onUpdate));
+    bottomBoundButton.signal_value_changed().connect(sigc::mem_fun(*this, &ChooserLimiter::onUpdate));
     attach(bottomBoundFrame, 0, 0);
     bottomBoundFrame.set_hexpand();
 
     topBoundFrame.set_child(topBoundButton);
-    topBoundButton.signal_changed().connect(sigc::mem_fun(*this, &ChooserLimiter::onUpdate));
+    topBoundButton.signal_value_changed().connect(sigc::mem_fun(*this, &ChooserLimiter::onUpdate));
     attach(topBoundFrame, 1, 0);
     topBoundFrame.set_hexpand();
 
@@ -92,7 +98,7 @@ ChooserLimiter::ChooserLimiter(Glib::ustring fieldName) :
 std::pair<int64_t, int64_t> ChooserLimiter::getLimits() const {
     if(!shouldChooseButton.get_active())
         return {0, std::numeric_limits<int64_t>::max()};
-    return {bottomBoundButton.get_value(), topBoundButton.get_value()};
+    return {bottomBoundButton.get_value_as_int(), topBoundButton.get_value_as_int()};
 }
 
 sigc::signal<void()> ChooserLimiter::signalOnUpdate() const {
