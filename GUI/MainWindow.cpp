@@ -34,15 +34,14 @@ void MainWindow::onOpenDSPWindow() {
     if(dspWindow)
         return;
 
-    Gtk::FileChooserDialog* dialog = new Gtk::FileChooserDialog(*this, "Choose database", Gtk::FileChooser::Action::OPEN);
+    Glib::RefPtr<Gtk::FileChooserNative> dialog = Gtk::FileChooserNative::create("Choose database", *this, Gtk::FileChooser::Action::OPEN);
     dialog->set_modal();
-    dialog->add_button("_Cancel", Gtk::ResponseType::CANCEL);
-    dialog->add_button("_Open",   Gtk::ResponseType::OK);
+    //dialog->add_button("_Cancel", Gtk::ResponseType::CANCEL);
+    //dialog->add_button("_Open",   Gtk::ResponseType::OK);
 
     dialog->signal_response().connect(
         [dialog, this](int response_id) {
-            if(response_id != Gtk::ResponseType::OK) {
-                delete dialog;
+            if(response_id != Gtk::ResponseType::ACCEPT) {
                 return;
             }
 
@@ -57,7 +56,6 @@ void MainWindow::onOpenDSPWindow() {
             catch(std::exception& ex) {
                 std::cerr << ex.what();
             }
-            delete dialog;
         }
     );
 

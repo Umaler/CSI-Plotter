@@ -3,6 +3,7 @@
 #include <limits>
 #include <vector>
 #include <sigc++/sigc++.h>
+#include <gdkmm/rgba.h>
 
 class DataSet {
 public:
@@ -40,12 +41,21 @@ public:
 
     size_t getNumberOfPoints() const;
 
+    void show(bool toDraw = true);
+    bool isShown();
+
+    void setColor(Gdk::RGBA color);
+    Gdk::RGBA getColor();
+
     const double* getFirstElementAddress() const;
     size_t getSizeOfBuffer() const;
     Extrems getExtremums() const;
 
 private:
     void sort();
+
+    bool toDraw = true;
+    Gdk::RGBA color;
 
     void addPoint(double x, double y);
     Extrems extr;

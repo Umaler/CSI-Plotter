@@ -2,7 +2,8 @@
 
 DataSourcePlotWindow::DataSourcePlotWindow(std::unique_ptr<DataSource> ds) :
     source(std::move(ds)),
-    fieldChooser(source->getDescriptor())
+    fieldChooser(source->getDescriptor()),
+    plotDataSet(new DataSet)
 {
     mainGrid.attach(fieldChooser, 0, 0, 1, 2);
     mainGrid.attach(ep, 1, 0);
@@ -12,12 +13,18 @@ DataSourcePlotWindow::DataSourcePlotWindow(std::unique_ptr<DataSource> ds) :
     choosersPanel.set_hexpand();
     choosersPanel.signalNewBounds().connect(sigc::mem_fun(*source, &DataSource::setBoundaries));
 
+    plotDataSet->setColor(Gdk::RGBA("black"));
     ep.addDataSet(plotDataSet);
+    std::shared_ptr<DataSet> testS(new DataSet);
+    testS->addDataPoint(0, 10);
+    testS->addDataPoint(500, 142);
+    testS->setColor(Gdk::RGBA("red"));
+    ep.addDataSet(testS);
 
     fieldChooser.set_vexpand();
     fieldChooser.signalOnChoosed().connect([&](std::string table, std::string field) {
         source->stopCollection();
-        plotDataSet.clear();
+        plotDataSet->clear();
         source->addCollectionType(table, field);
     });
 
@@ -30,5 +37,5 @@ DataSourcePlotWindow::DataSourcePlotWindow(std::unique_ptr<DataSource> ds) :
 
 void DataSourcePlotWindow::onDataArrived(std::vector<std::vector<std::pair<double, double>>> data) {
     if(!data.empty())
-        plotDataSet.addData(data[0].begin(), data[0].end());
+        plotDataSet->addData(data[0].begin(), data[0].end());
 }

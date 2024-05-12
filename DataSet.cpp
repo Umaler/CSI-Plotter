@@ -16,6 +16,24 @@ void DataSet::clear() {
     signalChanged.emit(*this);
 }
 
+void DataSet::show(bool toDraw) {
+    this->toDraw = toDraw;
+    signalChanged.emit(*this);
+}
+
+bool DataSet::isShown() {
+    return toDraw;
+}
+
+void DataSet::setColor(Gdk::RGBA color) {
+    this->color = color;
+    signalChanged.emit(*this);
+}
+
+Gdk::RGBA DataSet::getColor() {
+    return color;
+}
+
 sigc::signal<void(DataSet&)> DataSet::signalOnChanged() const {
     return signalChanged;
 }

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <cstdlib>
 
 #include <gtkmm.h>
@@ -13,7 +14,8 @@ int main(int argc, char *argv[])
         // because since gtk 4.14 default behavior is
         // to prefer gles over gl
         // gitlab.gnome.org/GNOME/gtk/-/issues/6589
-        putenv("GDK_DEBUG=gl-prefer-gl");
+        std::string var("GDK_DEBUG=gl-prefer-gl");
+        putenv(&var[0]);
     #endif
 
     auto app = Gtk::Application::create();

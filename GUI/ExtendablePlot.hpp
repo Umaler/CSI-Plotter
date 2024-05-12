@@ -5,13 +5,14 @@
 #include "../DataSet.hpp"
 
 #include <epoxy/gl.h>
-#include <iostream>
+#include <memory>
+#include <vector>
 
 class ExtendablePlot : public Gtk::GLArea {
 public:
     ExtendablePlot();
 
-    void addDataSet(const DataSet& ds);
+    void addDataSet(std::shared_ptr<DataSet> ds);
 
     virtual ~ExtendablePlot() = default;
 
@@ -26,7 +27,7 @@ protected:
     double minX = std::numeric_limits<double>::max();
     double maxY = std::numeric_limits<double>::lowest();
     double minY = std::numeric_limits<double>::max();
-    const DataSet* ds;
+    std::vector<std::shared_ptr<DataSet>> datasets;
 
     Shader shader;
     Shader textureShader;

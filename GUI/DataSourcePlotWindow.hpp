@@ -19,7 +19,7 @@ private:
 
     std::unique_ptr<DataSource> source;
     ExtendablePlot ep;
-    DataSet plotDataSet;
+    std::shared_ptr<DataSet> plotDataSet;
     FieldChooser fieldChooser;
     ChoosersPanel choosersPanel;
 
