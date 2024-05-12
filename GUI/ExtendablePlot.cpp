@@ -1,5 +1,7 @@
 #include "ExtendablePlot.hpp"
 
+#include <fstream>
+
 ExtendablePlot::ExtendablePlot() {
     set_size_request(left_reserve + right_reserve, up_reserve + down_reserve);
     set_use_es(false);
@@ -22,48 +24,23 @@ void ExtendablePlot::onUpdates(const DataSet& updatedDS) {
 }
 
 void ExtendablePlot::initShaders() {
-    constexpr const char* const vertShaderProgram =     "#version 460\n"
-                                                        "layout(location = 0) in vec2 aPos;\n"
-                                                        "uniform double xMult;\n"
-                                                        "uniform double xShift;\n"
-                                                        "uniform double yMult;\n"
-                                                        "uniform double yShift;\n"
-                                                        "void main() {\n"
-                                                        //"   gl_Position = vec4(0, 0, 0, 1);\n"
-                                                        "   gl_Position = vec4(aPos.x * xMult + xShift, aPos.y * yMult + yShift, 0.0, 1.0);\n"
-                                                        "}";
+    const char *const vertFile     = "VertShader.glsl",
+               *const fragFile     = "FragShader.glsl",
+               *const textVertFile = "TextureVertShader.glsl",
+               *const textFragFile = "TextureFragShader.glsl";
 
-    constexpr const char* const fragShaderProgram =     "#version 460\n"
-                                                        "out vec4 FragColor;\n"
-                                                        "uniform vec4 color;\n"
-                                                        "void main() {\n"
-                                                        "   FragColor = color;\n"
-                                                        "}";
-    shader = Shader(vertShaderProgram, fragShaderProgram);
+    auto readFile = [](const char* const filename) {
+        std::ifstream stream(filename);
 
-    constexpr const char textVertProg[] =  "#version 460\n"
-                                           "layout (location = 0) in vec2 aPos;\n"
-                                           "layout (location = 1) in vec2 aTexCoord;\n"
-                                           "\n"
-                                           "out vec2 TexCoord;\n"
-                                           "\n"
-                                           "void main()\n"
-                                           "{\n"
-                                               "gl_Position = vec4(aPos, 0.0, 1.0);\n"
-                                               "TexCoord = aTexCoord;\n"
-                                           "}";
-    constexpr const char textFragProg[] =  "#version 460\n"
-                                           "out vec4 FragColor;\n"
-                                           "\n"
-                                           "in vec2 TexCoord;\n"
-                                           "\n"
-                                           "uniform sampler2D ourTexture;\n"
-                                           "\n"
-                                           "void main()\n"
-                                           "{\n"
-                                               "FragColor = texture(ourTexture, TexCoord);\n"
-                                           "}";
-    textureShader = Shader(textVertProg, textFragProg);
+        if(!stream)
+            throw std::runtime_error("Incorrect shader filename");
+
+        return std::string((std::istreambuf_iterator<char>(stream)),
+                            std::istreambuf_iterator<char>());
+    };
+
+    shader        = Shader(readFile(vertFile).c_str(), readFile(fragFile).c_str());
+    textureShader = Shader(readFile(textVertFile).c_str(), readFile(textFragFile).c_str());
 }
 
 void ExtendablePlot::on_realize() {
