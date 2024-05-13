@@ -6,10 +6,13 @@
 #include <mutex>
 #include <thread>
 #include <glibmm/dispatcher.h>
+#include <gtkmm/box.h>
+#include <gtkmm/frame.h>
+#include <gtkmm/entry.h>
 
 class RTSource : public DataSource {
 public:
-    RTSource(unsigned int newPort = 40055);
+    RTSource(std::string dbFilename = "", unsigned int newPort = 40055);
 
     virtual const DBDescriptor& getDescriptor() const;
 
@@ -24,6 +27,9 @@ public:
     virtual ~RTSource() = default;
 
 private:
+    Gtk::Frame entryFrame;
+    Gtk::Entry markEntry;
+
     void newDataArrived();
 
     std::mutex filtersM;

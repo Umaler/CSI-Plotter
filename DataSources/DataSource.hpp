@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <gtkmm/box.h>
 
 #include "../utils/DBDescriptor.hpp"
 #include "../utils/Boundaries.hpp"
@@ -20,8 +21,15 @@ public:
     virtual void removeAllCollectionTypes() = 0;
     virtual void stopCollection() = 0;
 
+    virtual Gtk::Box& getSettingsBox() {
+        return settingsBox;
+    }
+
     virtual SignalType signalOnNewDataArrived() const = 0;
 
     virtual ~DataSource() = default;
+
+protected:
+    Gtk::Box settingsBox;
 
 };

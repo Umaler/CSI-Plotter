@@ -24,6 +24,17 @@ DBDescriptor::DBDescriptor(std::initializer_list<Table> il) {
     }
 }
 
+DBDescriptor::DBDescriptor(const DBDescriptor&) = default;
+
+DBDescriptor DBDescriptor::add(std::initializer_list<Table> il) const {
+    DBDescriptor newdesc(*this);
+
+    for(const auto& i : il) {
+        newdesc.tables.push_back(i);
+    }
+    return newdesc;
+}
+
 DBDescriptor::Tables::iterator DBDescriptor::begin() {
     return tables.begin();
 }

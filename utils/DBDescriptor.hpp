@@ -22,11 +22,14 @@ public:
     typedef std::vector<Table> Tables;
 
     DBDescriptor(std::initializer_list<Table> il);
+    DBDescriptor(const DBDescriptor&);
 
     Tables::iterator begin();
     Tables::const_iterator begin() const;
     Tables::iterator end();
     Tables::const_iterator end() const;
+
+    DBDescriptor add(std::initializer_list<Table> il) const;
 
     bool checkCompliance(SQLite::Database& db) const;
 

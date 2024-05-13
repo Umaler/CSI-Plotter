@@ -13,6 +13,8 @@ DataSourcePlotWindow::DataSourcePlotWindow(std::unique_ptr<DataSource> ds) :
     choosersPanel.set_hexpand();
     choosersPanel.signalNewBounds().connect(sigc::mem_fun(*source, &DataSource::setBoundaries));
 
+    mainGrid.attach(source->getSettingsBox(), 2, 0, 1, 2);
+
     plotDataSet->setColor(Gdk::RGBA("black"));
     ep.addDataSet(plotDataSet);
 
@@ -31,6 +33,7 @@ DataSourcePlotWindow::DataSourcePlotWindow(std::unique_ptr<DataSource> ds) :
 }
 
 void DataSourcePlotWindow::onDataArrived(std::vector<std::vector<std::pair<double, double>>> data) {
-    if(!data.empty())
-        plotDataSet->addData(data[0].begin(), data[0].end());
+    if(data.empty())
+        return;
+    plotDataSet->addData(data[0].begin(), data[0].end());
 }

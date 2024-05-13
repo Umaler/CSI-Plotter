@@ -23,5 +23,7 @@ private:
     FieldChooser fieldChooser;
     ChoosersPanel choosersPanel;
 
+    Gtk::CheckButton toUseKalman;
+    std::shared_ptr<DataSet> kalmanDataSet;
 
 };

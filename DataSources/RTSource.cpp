@@ -8,7 +8,9 @@ extern "C" {
 #include <iostream>
 #include <cmath>
 
-RTSource::RTSource(unsigned int newPort) :
+RTSource::RTSource(std::string dbFilename, unsigned int newPort) :
+    entryFrame("Mark of input data"),
+
     port(newPort),
     filtersUpdated(false),
     worker(*this, port)
@@ -18,6 +20,9 @@ RTSource::RTSource(unsigned int newPort) :
         newDataArrivedSignal.emit(std::move(commonBuf));
         commonBuf.clear();
     });
+
+    entryFrame.set_child(markEntry);
+    settingsBox.append(entryFrame);
 }
 
 const DBDescriptor& RTSource::getDescriptor() const {

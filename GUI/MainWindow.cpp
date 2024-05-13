@@ -68,10 +68,28 @@ void MainWindow::onOpenRTDSWindow() {
             if(response != Gtk::ResponseType::OK)
                 return;
 
-            rtdsWindow.reset(new DataSourcePlotWindow(std::make_unique<RTSource>(selector->getValue())));
-            rtdsWindow->signal_unmap().connect( [&](){rtdsWindow.reset();} );
-            rtdsWindow->set_title("Real time plot");
-            rtdsWindow->show();
+            Glib::RefPtr<Gtk::FileChooserNative> dialog = Gtk::FileChooserNative::create("Choose database", *this, Gtk::FileChooser::Action::OPEN);
+            dialog->set_modal();
+
+            dialog->signal_response().connect(
+                [selector, dialog, this](int response_id) {
+                    if(response_id != Gtk::ResponseType::ACCEPT) {
+                        return;
+                    }
+
+                    try {
+                        rtdsWindow.reset(new DataSourcePlotWindow(std::make_unique<RTSource>(dialog->get_file()->get_path(), selector->getValue())));
+                        rtdsWindow->signal_unmap().connect( [&](){rtdsWindow.reset();} );
+                        rtdsWindow->set_title("Real time plot");
+                        rtdsWindow->show();
+                    }
+                    catch(std::exception& ex) {
+                        std::cerr << ex.what();
+                    }
+                }
+            );
+
+            dialog->show();
         }
     );
 
