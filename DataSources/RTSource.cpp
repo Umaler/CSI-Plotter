@@ -8,7 +8,8 @@ extern "C" {
 #include <iostream>
 #include <cmath>
 
-RTSource::RTSource() :
+RTSource::RTSource(unsigned int newPort) :
+    port(newPort),
     filtersUpdated(false),
     worker(*this, port)
 {

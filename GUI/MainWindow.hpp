@@ -22,9 +22,8 @@ private:
 
     Gtk::Box mainBox;
 
-    Gtk::Button openDSPButton{"_Open Data Source Plot Window", true};
-    Gtk::Button openRTDSButton{"_Open Real Time DS Window", true};
-    Gtk::Button openDiffPhaseDB{"_Open from DB with phase diff", true};
+    Gtk::Button openDSPButton{"Open Data Source Plot Window"};
+    Gtk::Button openRTDSButton{"Open Real Time DS Window"};
 
     std::unique_ptr<DataSourcePlotWindow> dspWindow;
     std::unique_ptr<DataSourcePlotWindow> rtdsWindow;

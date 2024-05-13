@@ -6,6 +6,8 @@
 #include "../DataSources/RTSource.hpp"
 #include "../DataSources/DBPhaseDiffSource.hpp"
 
+#include "PortSelector.hpp"
+
 namespace WMG {
 
 MainWindow::MainWindow() :
@@ -25,9 +27,6 @@ MainWindow::MainWindow() :
 
     mainBox.append(openRTDSButton);
     openRTDSButton.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenRTDSWindow) );
-
-    mainBox.append(openDiffPhaseDB);
-    openDiffPhaseDB.signal_clicked().connect( sigc::mem_fun(*this, &MainWindow::onOpenDBPDWindow) );
 }
 
 void MainWindow::onOpenDSPWindow() {
@@ -64,22 +63,19 @@ void MainWindow::onOpenRTDSWindow() {
     if(rtdsWindow)
         return;
 
-    rtdsWindow.reset(new DataSourcePlotWindow(std::make_unique<RTSource>()));
-    rtdsWindow->signal_unmap().connect( [&](){rtdsWindow.reset();} );
-    rtdsWindow->set_title("Real time plot");
-    rtdsWindow->show();
-}
+    std::shared_ptr<PortSelector> selector(new PortSelector(*this));
+    selector->signalOnResponse().connect([selector, this](Gtk::ResponseType response) {
+            if(response != Gtk::ResponseType::OK)
+                return;
 
-void MainWindow::onOpenDBPDWindow() {
-    if(dbpdWindow)
-        return;
+            rtdsWindow.reset(new DataSourcePlotWindow(std::make_unique<RTSource>(selector->getValue())));
+            rtdsWindow->signal_unmap().connect( [&](){rtdsWindow.reset();} );
+            rtdsWindow->set_title("Real time plot");
+            rtdsWindow->show();
+        }
+    );
 
-    SQLite::Database db("/home/user/Exp12.01.24.sqlite");
-
-    dbpdWindow.reset(new DataSourcePlotWindow(std::make_unique<DBPhaseDiffSource>(std::move(db))));
-    dbpdWindow->signal_unmap().connect( [&](){dbpdWindow.reset();} );
-    dbpdWindow->set_title("Data base phase diff plot");
-    dbpdWindow->show();
+    selector->show();
 }
 
 }

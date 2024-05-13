@@ -65,6 +65,8 @@
 		<Unit filename="GUI/MainWindow.hpp" />
 		<Unit filename="GUI/OpenGL/Shader.cpp" />
 		<Unit filename="GUI/OpenGL/Shader.hpp" />
+		<Unit filename="GUI/PortSelector.cpp" />
+		<Unit filename="GUI/PortSelector.hpp" />
 		<Unit filename="csi_fun.c">
 			<Option compilerVar="CC" />
 		</Unit>

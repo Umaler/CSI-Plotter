@@ -9,7 +9,7 @@
 
 class RTSource : public DataSource {
 public:
-    RTSource();
+    RTSource(unsigned int newPort = 40055);
 
     virtual const DBDescriptor& getDescriptor() const;
 
@@ -37,7 +37,7 @@ private:
     DataSource::SignalType newDataArrivedSignal;
     Glib::Dispatcher newDataCollected;
 
-    const unsigned int port = 40055;
+    const unsigned int port;
 
     class Worker {
     public:
