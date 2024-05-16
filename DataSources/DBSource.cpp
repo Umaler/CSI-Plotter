@@ -31,9 +31,7 @@ void DBSource::setBoundaries(Boundaries bounds) {
     this->bounds = bounds;
     boundsUpdated = true;
 
-    //workerThread.reset();
-    //stopWorker = false;
-    //workerThread.reset(new std::thread(&DBSource::worker, this));
+    worker.start();
 }
 
 void DBSource::addCollectionType(std::string table, std::string field) {

@@ -254,8 +254,9 @@ bool ExtendablePlot::on_render(const Glib::RefPtr< Gdk::GLContext >& context) {
 
     maxX = localMaxX;
     minX = 0;
-    if(maxY < 0) maxY = 0;
-    if(minY > 0) minY = 0;
+
+    if(maxY == std::numeric_limits<double>::lowest()) maxY = 0;
+    if(minY == std::numeric_limits<double>::max())    minY = 0;
 
     drawLegend(context->get_surface()->get_width(), context->get_surface()->get_height(), graphBox);
     glFlush();

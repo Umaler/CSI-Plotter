@@ -23,6 +23,21 @@ RTSource::RTSource(std::string dbFilename, unsigned int newPort) :
 
     entryFrame.set_child(markEntry);
     settingsBox.append(entryFrame);
+
+    applyButton.signal_clicked().connect([&]() {
+            Glib::ustring correctString;
+            for(const char ch : markEntry.get_text()) {
+                if(!std::isdigit(ch)) continue;
+                correctString.push_back(ch);
+            }
+
+            lastMarkEntry.set_text(correctString);
+
+            std::lock_guard lg(markM);
+            markUpdated = true;
+            mark = markEntry.get_text();
+        }
+    );
 }
 
 const DBDescriptor& RTSource::getDescriptor() const {
@@ -33,14 +48,17 @@ void RTSource::setBoundaries(Boundaries bounds) {
     std::lock_guard lg(filtersM);
     this->bounds = bounds;
     filtersUpdated = true;
+    worker.start();
 }
 
 void RTSource::addCollectionType(std::string table, std::string field) {
     std::lock_guard lg(filtersM);
+    std::lock_guard blg(commonBufM);
     this->table = table;
     this->field = field;
     filtersUpdated = true;
 
+    commonBuf.clear();
     worker.start();
 }
 
@@ -49,6 +67,8 @@ void RTSource::removeCollectionType(std::string table, std::string field) {
 }
 
 void RTSource::removeAllCollectionTypes() {
+    std::lock_guard blg(commonBufM);
+    commonBuf.clear();
     worker.stop();
 }
 
@@ -139,63 +159,92 @@ void RTSource::Worker::work() {
                     pauseTransfer = true;
                 }
             }
-
-
-            int64_t packid = boundsToTransfer.packId.min >= 0 ? boundsToTransfer.packId.min : 0;
-            for(auto it = allCollectedData.begin();
-                packid < boundsToTransfer.packId.max && it != allCollectedData.end();
-                packid++, ++it)
-            {
-                for(int64_t subcarr = (boundsToTransfer.numSub.min >= 0 ? boundsToTransfer.numSub.min : 0);
-                    subcarr < maxSubcars && subcarr < boundsToTransfer.numSub.max;
-                    subcarr++)
+                int64_t packid = boundsToTransfer.packId.min >= 0 ? boundsToTransfer.packId.min : 0;
+                for(auto it = allCollectedData.begin();
+                    packid <= boundsToTransfer.packId.max && it != allCollectedData.end();
+                    packid++, ++it)
                 {
-                    int64_t id = packid * maxSubcars + subcarr;
-                    if(id < boundsToTransfer.id.min || id > boundsToTransfer.id.max)
-                        continue;
-                    if(dataToTransfer == DataType::amps) {
-                        bufferToTransfer[0].push_back({id, (*it)[subcarr].amps[tx][rx]});
-                    }
-                    else {
-                        bufferToTransfer[0].push_back({id, (*it)[subcarr].phas[tx][rx]});
+                    for(int64_t subcarr = (boundsToTransfer.numSub.min >= 0 ? boundsToTransfer.numSub.min : 0);
+                        subcarr < maxSubcars && subcarr <= boundsToTransfer.numSub.max;
+                        subcarr++)
+                    {
+                        int64_t id = packid * maxSubcars + subcarr;
+                        if(id < boundsToTransfer.id.min || id > boundsToTransfer.id.max)
+                            continue;
+                        if(dataToTransfer == DataType::amps) {
+                            bufferToTransfer[0].push_back({id, (*it)[subcarr].amps[tx][rx]});
+                        }
+                        else {
+                            bufferToTransfer[0].push_back({id, (*it)[subcarr].phas[tx][rx]});
+                        }
                     }
                 }
+
+                parent.filtersUpdated = false;
             }
 
-            parent.filtersUpdated = false;
-        }
+            sf::Socket::Status status = socket.receive(in, sizeof(in), received, sender, senderPort);
+            if(status != sf::Socket::Status::Done)
+                continue;
 
-        sf::Socket::Status status = socket.receive(in, sizeof(in), received, sender, senderPort);
-        if(status != sf::Socket::Status::Done)
-            continue;
+            record_status(in, received, &csi_status);
 
-        record_status(in, received, &csi_status);
+            if(csi_status.payload_len < 1056) {
+                continue;
+            }
 
-        if(csi_status.payload_len < 1056) {
-            continue;
-        }
+            std::vector<unsigned char> data_buf(csi_status.payload_len);
+            record_csi_payload(in, &csi_status, &data_buf[0], csi_matrix);
 
-        unsigned char* data_buf = new unsigned char[csi_status.payload_len];
-        record_csi_payload(in, &csi_status, data_buf, csi_matrix);
+            allCollectedData.push_back({});
+            DataSlice slice;
+            for(unsigned i = 0; i < csi_status.num_tones; i++) {
+                FullDataSlice fslice;
+                for(unsigned j = 0; j < 3; j++) {
+                    for(unsigned k = 0; k < 3; k++) {
+                        int imag = csi_matrix[j][k][i].imag;
+                        int real = csi_matrix[j][k][i].real;
+                        fslice.imag[j][k] = imag;
+                        fslice.real[j][k] = real;
 
-        allCollectedData.push_back({});
-        DataSlice slice;
-        for(unsigned i = 0; i < csi_status.num_tones; i++) {
-            for(unsigned j = 0; j < 3; j++) {
-                for(unsigned k = 0; k < 3; k++) {
-                    slice.amps[j][k] = std::sqrt(csi_matrix[j][k][i].imag * csi_matrix[j][k][i].imag + csi_matrix[j][k][i].real * csi_matrix[j][k][i].real);
-                    slice.phas[j][k] = std::atan(static_cast<double>(csi_matrix[j][k][i].imag) / static_cast<double>(csi_matrix[j][k][i].real));
+                        // see CSI definition
+                        slice.amps[j][k] = std::sqrt(imag * imag + real * real);
+                        fslice.amps[j][k] = slice.amps[j][k];
+                        if(real != 0) {
+                            slice.phas[j][k] = std::atan(static_cast<double>(imag) / static_cast<double>(real));
+                            if(real < 0 && imag >= 0)
+                                slice.phas[j][k] += 3.14;
+                            if(real < 0 && imag < 0)
+                                slice.phas[j][k] -= 3.14;
+                        }
+                        else {
+                            if(imag > 0) {
+                                slice.phas[j][k] = 3.14 / 2.0;
+                            }
+                            else {
+                                slice.phas[j][k] = -3.14 / 2.0;
+                            }
+                        }
+                        fslice.phas[j][k] = slice.phas[j][k];
+                    }
                 }
-            }
-            allCollectedData.back()[i] = slice;
-            if(allCollectedData.size() >= boundsToTransfer.packId.min && allCollectedData.size() <= boundsToTransfer.packId.max &&
-               allCollectedData.size() * maxSubcars >= boundsToTransfer.id.min && allCollectedData.size() * maxSubcars <= boundsToTransfer.id.max &&
-               i >= boundsToTransfer.numSub.min && i <= boundsToTransfer.numSub.max
-               )
-            {
-                size_t x;
-                if(allCollectedData.size() < csi_status.num_tones) {
-                    x = i;
+                writeToDB(fslice, i);
+
+                allCollectedData.back()[i] = slice;
+
+                if(allCollectedData.size() < boundsToTransfer.packId.min || allCollectedData.size() > boundsToTransfer.packId.max)
+                    continue;
+                if(allCollectedData.size() * maxSubcars < boundsToTransfer.id.min || allCollectedData.size() * maxSubcars > boundsToTransfer.id.max)
+                    continue;
+                if(allCollectedData.size() * maxSubcars + i < boundsToTransfer.measId.min || allCollectedData.size() * maxSubcars + i > boundsToTransfer.measId.max)
+                    continue;
+
+                size_t x = allCollectedData.size() * maxSubcars + i;
+                if(i >= boundsToTransfer.numSub.min && i <= boundsToTransfer.numSub.max) {
+                    if(dataToTransfer == DataType::amps)
+                        bufferToTransfer[0].push_back({x, slice.amps[tx][rx]});
+                    else
+                        bufferToTransfer[0].push_back({x, slice.phas[tx][rx]});
                 }
                 else {
                     x = allCollectedData.size() - csi_status.num_tones + i;

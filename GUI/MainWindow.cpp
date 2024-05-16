@@ -68,6 +68,12 @@ void MainWindow::onOpenRTDSWindow() {
             if(response != Gtk::ResponseType::OK)
                 return;
 
+            if (sf::UdpSocket socket; socket.bind(selector->getValue()) != sf::Socket::Status::Done) {
+                auto ad = Gtk::AlertDialog::create("Unable to use this port");
+                ad->show();
+                return;
+            }
+
             Glib::RefPtr<Gtk::FileChooserNative> dialog = Gtk::FileChooserNative::create("Choose database", *this, Gtk::FileChooser::Action::OPEN);
             dialog->set_modal();
 

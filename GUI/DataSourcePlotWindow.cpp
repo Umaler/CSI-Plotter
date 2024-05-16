@@ -11,7 +11,12 @@ DataSourcePlotWindow::DataSourcePlotWindow(std::unique_ptr<DataSource> ds) :
 
     mainGrid.attach(choosersPanel, 1, 1);
     choosersPanel.set_hexpand();
-    choosersPanel.signalNewBounds().connect(sigc::mem_fun(*source, &DataSource::setBoundaries));
+    choosersPanel.signalNewBounds().connect([&](Boundaries bounds) {
+            source->stopCollection();
+            plotDataSet->clear();
+            source->setBoundaries(bounds);
+        }
+    );
 
     mainGrid.attach(source->getSettingsBox(), 2, 0, 1, 2);
 
