@@ -9,6 +9,7 @@
 #include <gtkmm/box.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/entry.h>
+#include <gtkmm/button.h>
 
 class RTSource : public DataSource {
 public:
@@ -28,7 +29,15 @@ public:
 
 private:
     Gtk::Frame entryFrame;
+    Gtk::Box markBox;
     Gtk::Entry markEntry;
+    Gtk::Frame lastMarkFrame;
+    Gtk::Entry lastMarkEntry;
+    Gtk::Button applyButton{"Применить маркировку"};
+
+    std::mutex markM;
+    std::atomic<bool> markUpdated;
+    Glib::ustring mark;
 
     void newDataArrived();
 
@@ -47,7 +56,7 @@ private:
 
     class Worker {
     public:
-        Worker(RTSource& par, unsigned int p);
+        Worker(RTSource& par, unsigned int p, SQLite::Database&& ndb);
 
         void start();
         void stop();
@@ -58,11 +67,19 @@ private:
             double phas[3][3];
         };
 
+        struct FullDataSlice : DataSlice {
+            double imag[3][3];
+            double real[3][3];
+        };
+
+        SQLite::Database db;
+
         RTSource& parent;
         const unsigned int port;
         std::unique_ptr<std::thread, std::function<void(std::thread*)>> workerThread;
         std::atomic<bool> pauseTransfer;
         std::atomic<bool> stopWorker;
+        void writeToDB(const FullDataSlice& slice, size_t subcarr);
         void work();
     } worker;
 

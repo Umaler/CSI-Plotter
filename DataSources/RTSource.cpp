@@ -1,19 +1,24 @@
 #include "RTSource.hpp"
 
+#include <iostream>
+#include <chrono>
+#include <sstream>
+#include <cmath>
+
 extern "C" {
     #include "../csi_fun.h"
 }
-
 #include <SFML/Network.hpp>
-#include <iostream>
-#include <cmath>
+#include <SQLiteCpp/Transaction.h>
 
 RTSource::RTSource(std::string dbFilename, unsigned int newPort) :
-    entryFrame("Mark of input data"),
+    markUpdated(false),
+    entryFrame("Маркировка данных"),
+    lastMarkFrame("Текущая маркировка"),
 
     port(newPort),
     filtersUpdated(false),
-    worker(*this, port)
+    worker(*this, port, SQLite::Database(dbFilename, SQLite::OPEN_READWRITE))
 {
     newDataCollected.connect([&](){
         std::lock_guard lg(commonBufM);
@@ -21,7 +26,13 @@ RTSource::RTSource(std::string dbFilename, unsigned int newPort) :
         commonBuf.clear();
     });
 
-    entryFrame.set_child(markEntry);
+    lastMarkEntry.set_editable(false);
+    markBox.set_orientation(Gtk::Orientation::VERTICAL);
+    markBox.append(markEntry);
+    lastMarkFrame.set_child(lastMarkEntry);
+    markBox.append(lastMarkFrame);
+    markBox.append(applyButton);
+    entryFrame.set_child(markBox);
     settingsBox.append(entryFrame);
 
     applyButton.signal_clicked().connect([&]() {
@@ -86,7 +97,8 @@ void RTSource::newDataArrived() {
     commonBuf.clear();
 }
 
-RTSource::Worker::Worker(RTSource& par, unsigned int p) :
+RTSource::Worker::Worker(RTSource& par, unsigned int p, SQLite::Database&& ndb) :
+    db(std::move(ndb)),
     parent(par),
     port(p),
     pauseTransfer(true),
@@ -102,7 +114,6 @@ RTSource::Worker::Worker(RTSource& par, unsigned int p) :
                  }
                  )
 {
-
 }
 
 void RTSource::Worker::start() {
@@ -113,52 +124,142 @@ void RTSource::Worker::stop() {
     pauseTransfer = true;
 }
 
-void RTSource::Worker::work() {
-    constexpr size_t maxSubcars = 114;
-    std::list<std::array<DataSlice, maxSubcars>> allCollectedData;
+void RTSource::Worker::writeToDB(const FullDataSlice& slice, size_t subcarr) {
+    try {
+        auto getMax = [&](std::string field, std::string table) -> int64_t {
+            SQLite::Statement query(db, std::string("SELECT MAX(") + field + ") AS M FROM " + table);
+            query.executeStep();
+            return query.getColumn(0);
+        };
 
-    const size_t rawBufSize = sf::UdpSocket::MaxDatagramSize;    //maximal size of UDP datagram
+        int64_t id_meas = getMax("id", "measurement") + 1;
+        int64_t id_pack = getMax("id", "packet") + 1;
 
-    sf::UdpSocket socket;
-    socket.setBlocking(false);
-
-    // Listen to messages on the specified port
-    if (socket.bind(port) != sf::Socket::Status::Done)
-        return;
-
-    unsigned char                in[rawBufSize];
-    std::size_t                  received = 0;
-    sf::IpAddress                sender;
-    unsigned short               senderPort;
-
-    Boundaries boundsToTransfer;
-    size_t tx = 0, rx = 0;
-    enum class DataType {
-        amps,
-        phas
-    } dataToTransfer;
-
-    COMPLEX csi_matrix[3][3][maxSubcars];
-    csi_struct csi_status;
-    while (!stopWorker) {
-        std::vector<std::vector<std::pair<double, double>>> bufferToTransfer;
-        bufferToTransfer.resize(1);
-        if(parent.filtersUpdated) {
-            { // update local copy of filters
-                std::lock_guard lg(parent.filtersM);
-                boundsToTransfer = parent.bounds;
-                tx = parent.field[0] - '1';
-                rx = parent.field[1] - '1';
-                if(parent.table == "amplitude") {
-                    dataToTransfer = DataType::amps;
-                }
-                else if (parent.table == "phase") {
-                    dataToTransfer = DataType::phas;
-                }
-                else {
-                    pauseTransfer = true;
-                }
+        auto nvars = [](size_t n) -> std::string {
+            if(n == 0) return "";
+            std::string result;
+            for(size_t i = 0; i < n - 1; i++) {
+                result += "?, ";
             }
+            result += "?";
+            return result;
+        };
+
+        auto constructAmpQ = [&](int64_t subc) {
+            SQLite::Statement ampQ(db, "INSERT INTO amplitude VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            ampQ.bind(1, id_meas);
+            ampQ.bind(2, id_pack);
+            ampQ.bind(3, id_meas);
+            ampQ.bind(4, subc);
+            return ampQ;
+        };
+
+        auto constructMeasQ = [&](int64_t subc) {
+            SQLite::Statement measQ(db, std::string("INSERT INTO measurement VALUES (?, ?, ?, ") + nvars(18) + ")");
+            measQ.bind(1, id_meas);
+            measQ.bind(2, id_pack);
+            measQ.bind(3, subc);
+            return measQ;
+        };
+
+        auto constructPhaseQ = [&](int64_t subc) {
+            SQLite::Statement phaseQ(db, "INSERT INTO phase VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            phaseQ.bind(1, id_meas);
+            phaseQ.bind(2, id_pack);
+            phaseQ.bind(3, id_meas);
+            phaseQ.bind(4, subc);
+            return phaseQ;
+        };
+
+        auto timePointAsStr = []() {
+            using namespace std::chrono;
+            std::stringstream ss;
+            ss << time_point_cast<seconds>(system_clock::now());
+            return ss.str();
+        };
+
+        SQLite::Transaction transaction(db);
+        // write packet
+        SQLite::Statement packQ(db, "INSERT INTO packet VALUES(?, ?, ?)");
+        packQ.bind(1, id_pack);
+        parent.markM.lock();
+            packQ.bind(2, parent.mark);
+        parent.markM.unlock();
+        packQ.bind(3, timePointAsStr());
+        packQ.exec();
+
+        auto amplQ = constructAmpQ(subcarr);
+        auto phasQ = constructPhaseQ(subcarr);
+        auto measQ = constructMeasQ(subcarr);
+        for(int i = 0; i < 3; i++) {
+            for(int j = 0; j < 3; j++) {
+                amplQ.bind(5 + i * 3 + j, slice.amps[i][j]);
+                phasQ.bind(5 + i * 3 + j, slice.phas[i][j]);
+                measQ.bind(4 + (i * 3 + j) * 2, slice.real[i][j]);
+                measQ.bind(5 + (i * 3 + j) * 2, slice.imag[i][j]);
+            }
+        }
+        amplQ.exec();
+        phasQ.exec();
+        measQ.exec();
+        transaction.commit();
+    }
+    catch(SQLite::Exception& ex) {
+        std::cerr << "SQLite exception: " << ex.what() << std::endl;
+    }
+    catch(std::exception& ex) {
+        std::cerr << ex.what() << std::endl;
+    }
+    catch(...) {
+        std::cerr << "RTSource::Worker::writeToDB: unknown exception";
+    }
+}
+
+void RTSource::Worker::work() {
+    try {
+        constexpr size_t maxSubcars = 114;
+        std::list<std::array<DataSlice, maxSubcars>> allCollectedData;
+
+        const size_t rawBufSize = sf::UdpSocket::MaxDatagramSize;    //maximal size of UDP datagram
+
+        sf::UdpSocket socket;
+        socket.setBlocking(false);
+
+        // Listen to messages on the specified port
+        if (socket.bind(port) != sf::Socket::Status::Done)
+            return;
+
+        unsigned char                in[rawBufSize];
+        std::size_t                  received = 0;
+        sf::IpAddress                sender;
+        unsigned short               senderPort;
+
+        Boundaries boundsToTransfer;
+        size_t tx = 0, rx = 0;
+        enum class DataType {
+            amps,
+            phas
+        } dataToTransfer;
+
+        COMPLEX csi_matrix[3][3][maxSubcars];
+        csi_struct csi_status;
+        while (!stopWorker) {
+            std::vector<std::vector<std::pair<double, double>>> bufferToTransfer;
+            bufferToTransfer.resize(1);
+            if(parent.filtersUpdated) {
+                { // update local copy of filters
+                    std::lock_guard lg(parent.filtersM);
+                    boundsToTransfer = parent.bounds;
+                    tx = parent.field[0] - '1';
+                    rx = parent.field[1] - '1';
+                    if(parent.table == "amplitude") {
+                        dataToTransfer = DataType::amps;
+                    }
+                    else if (parent.table == "phase") {
+                        dataToTransfer = DataType::phas;
+                    }
+                }
+
                 int64_t packid = boundsToTransfer.packId.min >= 0 ? boundsToTransfer.packId.min : 0;
                 for(auto it = allCollectedData.begin();
                     packid <= boundsToTransfer.packId.max && it != allCollectedData.end();
@@ -246,30 +347,27 @@ void RTSource::Worker::work() {
                     else
                         bufferToTransfer[0].push_back({x, slice.phas[tx][rx]});
                 }
-                else {
-                    x = allCollectedData.size() - csi_status.num_tones + i;
+
+            }
+
+            if(pauseTransfer) {
+                continue;
+            }
+
+            while(true) {
+                std::lock_guard lg(parent.commonBufM);
+                if(parent.commonBuf.empty()) {
+                    std::swap(parent.commonBuf, bufferToTransfer);
+                    parent.newDataCollected.emit();
+                    break;
                 }
-                if(dataToTransfer == DataType::amps)
-                    bufferToTransfer[0].push_back({x, slice.amps[tx][rx]});
-                else
-                    bufferToTransfer[0].push_back({x, slice.phas[tx][rx]});
             }
         }
-
-        if(pauseTransfer) {
-            delete [] data_buf;
-            continue;
-        }
-
-        while(true) {
-            std::lock_guard lg(parent.commonBufM);
-            if(parent.commonBuf.empty()) {
-                std::swap(parent.commonBuf, bufferToTransfer);
-                parent.newDataCollected.emit();
-                break;
-            }
-        }
-
-        delete [] data_buf;
+    }
+    catch(std::exception& ex) {
+        std::cerr << ex.what() << std::endl;
+    }
+    catch(...) {
+        std::cerr << "RTSource: unknown error" << std::endl;
     }
 }

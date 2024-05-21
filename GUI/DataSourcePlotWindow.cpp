@@ -20,7 +20,7 @@ DataSourcePlotWindow::DataSourcePlotWindow(std::unique_ptr<DataSource> ds) :
 
     mainGrid.attach(source->getSettingsBox(), 2, 0, 1, 2);
 
-    plotDataSet->setColor(Gdk::RGBA("black"));
+    plotDataSet->setColor(Gdk::RGBA("red"));
     ep.addDataSet(plotDataSet);
 
     fieldChooser.set_vexpand();

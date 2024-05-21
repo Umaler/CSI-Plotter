@@ -6,6 +6,8 @@
 #include "../DataSources/RTSource.hpp"
 #include "../DataSources/DBPhaseDiffSource.hpp"
 
+#include <SFML/Network.hpp>
+
 #include "PortSelector.hpp"
 
 namespace WMG {
