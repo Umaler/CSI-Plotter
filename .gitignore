@@ -4,3 +4,7 @@ obj/*
 bin/*
 *.log
 *.save
+
+csi_fun.c
+csi_fun.h
+
